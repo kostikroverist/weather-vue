@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import RefreshBar from '@/components/weather/RefreshBar.vue'
 
 describe('RefreshBar', () => {
-  it('під час loading клік не емітить refresh, кнопка має aria-disabled без disabled', async () => {
+  it('while loading a click does not emit refresh, the button has aria-disabled without disabled', async () => {
     const wrapper = mount(RefreshBar, { props: { updatedAt: 1700000000000, loading: true } })
     const button = wrapper.find('[data-testid="refresh"]')
     expect(button.attributes('aria-disabled')).toBe('true')
@@ -12,19 +12,19 @@ describe('RefreshBar', () => {
     expect(wrapper.emitted('refresh')).toBeUndefined()
   })
 
-  it('без loading клік емітить refresh', async () => {
+  it('without loading a click emits refresh', async () => {
     const wrapper = mount(RefreshBar, { props: { updatedAt: 1700000000000, loading: false } })
     await wrapper.find('[data-testid="refresh"]').trigger('click')
     expect(wrapper.emitted('refresh')).toHaveLength(1)
   })
 
-  it('при updatedAt = null рядка часу немає', () => {
+  it('there is no time line when updatedAt = null', () => {
     const wrapper = mount(RefreshBar, { props: { updatedAt: null, loading: false } })
     expect(wrapper.find('[data-testid="updated-at"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="refresh"]').exists()).toBe(true)
   })
 
-  it('при updatedAt показує «Оновлено …»', () => {
+  it('shows the "Updated …" line when updatedAt is set', () => {
     const wrapper = mount(RefreshBar, { props: { updatedAt: 1700000000000, loading: false } })
     expect(wrapper.find('[data-testid="updated-at"]').text()).toMatch(/^Оновлено \d{2}:\d{2}$/)
   })

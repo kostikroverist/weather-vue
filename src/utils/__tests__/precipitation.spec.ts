@@ -18,23 +18,23 @@ const hours = (mm: number[], snow: number[] = []) =>
   )
 
 describe('precipitation', () => {
-  it('збирає один діапазон з найсильнішим моментом', () => {
+  it('builds one range with the strongest moment', () => {
     expect(
       precipitationText(summarizePrecipitation(hours([0, 1.2, 2.4, 0.8, 0, 0, 0, 0]), 0)),
     ).toBe('Дощ з 21:00 до 06:00, найсильніший о 00:00: 2,4 мм')
   })
 
-  it('зʼєднує два діапазони через «і»', () => {
+  it('joins two ranges with "and"', () => {
     expect(precipitationText(summarizePrecipitation(hours([0.5, 0, 0, 0, 0, 0, 1, 0]), 0))).toBe(
       'Дощ з 18:00 до 21:00 і з 12:00 до 15:00, найсильніший о 12:00: 1 мм',
     )
   })
 
-  it('бере не більше двох діапазонів', () => {
+  it('takes at most two ranges', () => {
     expect(summarizePrecipitation(hours([1, 0, 1, 0, 1, 0, 0, 0]), 0)?.ranges).toHaveLength(2)
   })
 
-  it('визначає вид опадів', () => {
+  it('determines the precipitation type', () => {
     expect(
       summarizePrecipitation(hours([1, 0, 0, 0, 0, 0, 0, 0], [0, 0.5, 0, 0, 0, 0, 0, 0]), 0)?.kind,
     ).toBe('mixed')
@@ -43,7 +43,7 @@ describe('precipitation', () => {
     ).toBe('snow')
   })
 
-  it('без опадів дає null і відповідний текст', () => {
+  it('without precipitation yields null and the matching text', () => {
     expect(summarizePrecipitation(hours([0, 0, 0, 0, 0, 0, 0, 0]), 0)).toBeNull()
     expect(precipitationText(null)).toBe('Без опадів найближчі 24 години')
   })
@@ -54,7 +54,7 @@ describe('precipitation in English', () => {
     locale.value = 'uk'
   })
 
-  it('перекладає текст і форматує число з крапкою', () => {
+  it('translates the text and formats the number with a dot', () => {
     locale.value = 'en'
     expect(
       precipitationText(summarizePrecipitation(hours([0, 1.2, 2.4, 0.8, 0, 0, 0, 0]), 0)),

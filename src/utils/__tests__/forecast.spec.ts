@@ -12,7 +12,7 @@ describe('forecast', () => {
     await nextTick()
   })
 
-  it('toHourPoints бере перші 8 точок і переводить у відсотки та мм', () => {
+  it('toHourPoints takes the first 8 points and converts to percent and mm', () => {
     const list = Array.from({ length: 10 }, (_, i) =>
       item(T0 + i * 10800, i, { pop: 0.7, rain: { '3h': 1.25 } }),
     )
@@ -21,11 +21,11 @@ describe('forecast', () => {
     expect(hours[1]).toMatchObject({ time: '03:00', temp: 1, pop: 70, rain: 1.25, snow: 0 })
   })
 
-  it('toHourPoints без rain/snow дає нулі, а не NaN', () => {
+  it('toHourPoints without rain/snow yields zeros, not NaN', () => {
     expect(toHourPoints([item(T0, 5)], 0)[0]).toMatchObject({ rain: 0, snow: 0, pop: 0 })
   })
 
-  it('toDayPoints групує за датою міста, рахує avg/min/max/pop/суму опадів', () => {
+  it('toDayPoints groups by city date and computes avg/min/max/pop/precipitation sum', () => {
     const list = [
       item(T0, 2),
       item(T0 + 10800, 4, { pop: 0.3 }),
@@ -43,7 +43,7 @@ describe('forecast', () => {
     })
   })
 
-  it('toDayPoints віддає погодинні точки дня і підсумок його опадів', () => {
+  it('toDayPoints returns the hourly points of the day and its precipitation total', () => {
     const list = [
       item(T0, 2),
       item(T0 + 10800, 4, { rain: { '3h': 0.6 } }),
@@ -61,7 +61,7 @@ describe('forecast', () => {
     expect(second?.summary).toBeNull()
   })
 
-  it('toDayPoints включає сьогодні першим днем, навіть неповним, і віддає не більше 5 днів', () => {
+  it('toDayPoints includes today as the first day, even if partial, and returns at most 5 days', () => {
     const list = Array.from({ length: 40 }, (_, i) => item(T0 + 61200 + i * 10800, 1))
     const days = toDayPoints(list, 0)
     expect(days.map((d) => d.dateKey)).toEqual([
@@ -75,18 +75,18 @@ describe('forecast', () => {
     expect(days[1]?.hours).toHaveLength(8)
   })
 
-  it('toDayPoints використовує часовий пояс міста (Токіо)', () => {
+  it('toDayPoints uses the city time zone (Tokyo)', () => {
     const list = [item(T0 - 3600, 1), item(T0 + 3600, 3)]
     expect(toDayPoints(list, 32400).map((d) => d.dateKey)).toEqual(['2026-11-12'])
     expect(toDayPoints(list, 0).map((d) => d.dateKey)).toEqual(['2026-11-11', '2026-11-12'])
   })
 
-  it('toDayPoints віддає не більше 5 днів', () => {
+  it('toDayPoints returns at most 5 days', () => {
     const list = Array.from({ length: 48 }, (_, i) => item(T0 + i * 10800 + 3600, 1))
     expect(toDayPoints(list, 0)).toHaveLength(5)
   })
 
-  it('hourSeries дає підписи-години, температури, опади і комірки смуги', () => {
+  it('hourSeries yields hour labels, temperatures, precipitation and strip cells', () => {
     const hours = toHourPoints(
       [item(T0, 2, { pop: 0.4, rain: { '3h': 0.5 }, snow: { '3h': 0.2 } }), item(T0 + 10800, 3)],
       0,
@@ -102,7 +102,7 @@ describe('forecast', () => {
     })
   })
 
-  it('daySeries дає по днях: день тижня і число, середню, суму опадів і комірки', () => {
+  it('daySeries yields per day: weekday and date, average, precipitation sum and cells', () => {
     const list = [
       item(T0 + 43200, 4, { icon: '10d', pop: 0.6, rain: { '3h': 1.5 } }),
       item(T0 + 86400 + 43200, 8),
@@ -118,7 +118,7 @@ describe('forecast', () => {
     })
   })
 
-  it('daySeries підписує дні мовою інтерфейсу', () => {
+  it('daySeries labels days in the interface language', () => {
     locale.value = 'en'
     const days = toDayPoints([item(T0 + 43200, 4), item(T0 + 86400 + 43200, 8)], 0)
     const series = daySeries(days)
@@ -126,20 +126,20 @@ describe('forecast', () => {
     expect(series.cells.map((c) => c.label)).toEqual(['Thu', 'Fri'])
   })
 
-  it('toCurrentView вибирає найближчу подію сонця', () => {
+  it('toCurrentView picks the nearest sun event', () => {
     const sys = { sunrise: 200, sunset: 900 }
     expect(toCurrentView(current({ dt: 100, sys })).sunEvent?.kind).toBe('sunrise')
     expect(toCurrentView(current({ dt: 500, sys })).sunEvent?.kind).toBe('sunset')
     expect(toCurrentView(current({ dt: 1000, sys })).sunEvent?.kind).toBe('sunrise')
   })
 
-  it('toCurrentView без сходу чи заходу сонця (полярний день/ніч) не дає події', () => {
+  it('toCurrentView without sunrise or sunset (polar day/night) yields no event', () => {
     expect(toCurrentView(current({ sys: { sunrise: 0, sunset: 0 } })).sunEvent).toBeNull()
     expect(toCurrentView(current({ sys: { sunrise: 0, sunset: 900 } })).sunEvent).toBeNull()
     expect(toCurrentView(current({ sys: { sunrise: 200, sunset: 0 } })).sunEvent).toBeNull()
   })
 
-  it('toCurrentView рахує isDay між сходом і заходом, а полярний випадок вважає днем', () => {
+  it('toCurrentView computes isDay between sunrise and sunset and treats the polar case as day', () => {
     const sys = { sunrise: 200, sunset: 900 }
     expect(toCurrentView(current({ dt: 100, sys })).isDay).toBe(false)
     expect(toCurrentView(current({ dt: 200, sys })).isDay).toBe(true)

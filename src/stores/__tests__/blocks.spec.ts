@@ -38,14 +38,14 @@ describe('blocks store', () => {
     setActivePinia(createPinia())
   })
 
-  it('без збережених блоків стартує з одним порожнім блоком і визначає місто', () => {
+  it('without saved blocks starts with one empty block and determines the city', () => {
     const store = useBlocksStore()
     expect(store.blocks).toHaveLength(1)
     expect(store.blocks[0]?.city).toBeNull()
     expect(store.locating).toBe(true)
   })
 
-  it('add створює порожній блок', () => {
+  it('add creates an empty block', () => {
     const store = useBlocksStore()
     store.add()
     expect(store.blocks).toHaveLength(2)
@@ -53,7 +53,7 @@ describe('blocks store', () => {
     expect(store.blocks[1]?.id).not.toBe(store.blocks[0]?.id)
   })
 
-  it('після 5 блоків canAdd === false і add нічого не робить', () => {
+  it('after 5 blocks canAdd === false and add does nothing', () => {
     const store = useBlocksStore()
     for (let i = 1; i < BLOCKS_MAX; i++) store.add()
     expect(store.blocks).toHaveLength(5)
@@ -62,14 +62,14 @@ describe('blocks store', () => {
     expect(store.blocks).toHaveLength(5)
   })
 
-  it('з одним блоком canRemove === false і remove нічого не робить', () => {
+  it('with one block canRemove === false and remove does nothing', () => {
     const store = useBlocksStore()
     expect(store.canRemove).toBe(false)
     store.remove(store.blocks[0]!.id)
     expect(store.blocks).toHaveLength(1)
   })
 
-  it('remove видаляє блок, коли блоків більше одного', () => {
+  it('remove deletes a block when there is more than one', () => {
     const store = useBlocksStore()
     store.add()
     const [first, second] = store.blocks
@@ -77,7 +77,7 @@ describe('blocks store', () => {
     expect(store.blocks.map((b) => b.id)).toEqual([first!.id])
   })
 
-  it('setCity змінює місто тільки цього блоку', () => {
+  it('setCity changes the city of this block only', () => {
     const store = useBlocksStore()
     store.add()
     store.setCity(store.blocks[1]!.id, LVIV)
@@ -85,7 +85,7 @@ describe('blocks store', () => {
     expect(store.blocks[1]?.city).toEqual(LVIV)
   })
 
-  it('initFromIp підставляє місто за IP у перший блок', async () => {
+  it('initFromIp puts the IP city into the first block', async () => {
     vi.mocked(getCityByIp).mockResolvedValue(LVIV)
     const store = useBlocksStore()
     await store.initFromIp()
@@ -93,7 +93,7 @@ describe('blocks store', () => {
     expect(store.locating).toBe(false)
   })
 
-  it('initFromIp без міста ставить Київ', async () => {
+  it('initFromIp without a city sets Kyiv', async () => {
     vi.mocked(getCityByIp).mockResolvedValue(null)
     const store = useBlocksStore()
     await store.initFromIp()
@@ -101,7 +101,7 @@ describe('blocks store', () => {
     expect(store.locating).toBe(false)
   })
 
-  it('initFromIp не чіпає місто, яке користувач уже вибрав', async () => {
+  it('initFromIp does not touch a city the user has already chosen', async () => {
     vi.mocked(getCityByIp).mockResolvedValue(LVIV)
     const store = useBlocksStore()
     store.setCity(store.blocks[0]!.id, KYIV)
@@ -109,7 +109,7 @@ describe('blocks store', () => {
     expect(store.blocks[0]?.city).toEqual(KYIV)
   })
 
-  it('initFromIp не чіпає блок після видалення першого', async () => {
+  it('initFromIp does not touch a block after the first one is removed', async () => {
     vi.mocked(getCityByIp).mockResolvedValue(LVIV)
     const store = useBlocksStore()
     store.add()
@@ -118,7 +118,7 @@ describe('blocks store', () => {
     expect(store.blocks[0]?.city).toBeNull()
   })
 
-  it('initFromIp викликає getCityByIp лише один раз', async () => {
+  it('initFromIp calls getCityByIp only once', async () => {
     vi.mocked(getCityByIp).mockResolvedValue(null)
     const store = useBlocksStore()
     await Promise.all([store.initFromIp(), store.initFromIp()])
@@ -126,7 +126,7 @@ describe('blocks store', () => {
     expect(getCityByIp).toHaveBeenCalledTimes(1)
   })
 
-  it('зберігає блоки в localStorage і відновлює їх після перезавантаження', async () => {
+  it('saves blocks to localStorage and restores them after a reload', async () => {
     const store = useBlocksStore()
     store.setCity(store.blocks[0]!.id, LVIV)
     store.add()
@@ -138,7 +138,7 @@ describe('blocks store', () => {
     expect(restored.locating).toBe(false)
   })
 
-  it('зі збереженими блоками не визначає місто за IP', async () => {
+  it('does not determine the city by IP when blocks are saved', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([{ id: 'a', city: LVIV }]))
     const store = freshStore()
     await store.initFromIp()
@@ -146,7 +146,7 @@ describe('blocks store', () => {
     expect(store.blocks[0]?.city).toEqual(LVIV)
   })
 
-  it('пошкоджені збережені блоки ігноруються', () => {
+  it('corrupted saved blocks are ignored', () => {
     for (const raw of ['{broken', '[]', '[{"id":1,"city":null}]', '{"a":1}']) {
       localStorage.setItem(STORAGE_KEY, raw)
       const store = freshStore()
@@ -156,7 +156,7 @@ describe('blocks store', () => {
     }
   })
 
-  it('setCity першого блоку під час визначення IP прибирає locating і не перетирається', async () => {
+  it('setCity of the first block during IP lookup clears locating and is not overwritten', async () => {
     const ip = deferred<City | null>()
     vi.mocked(getCityByIp).mockReturnValue(ip.promise)
     const store = useBlocksStore()
@@ -169,7 +169,7 @@ describe('blocks store', () => {
     expect(store.locating).toBe(false)
   })
 
-  it('не пише в localStorage, поки визначається місто за IP', async () => {
+  it('does not write to localStorage while the city is determined by IP', async () => {
     const ip = deferred<City | null>()
     vi.mocked(getCityByIp).mockReturnValue(ip.promise)
     const store = useBlocksStore()
@@ -186,7 +186,7 @@ describe('blocks store', () => {
     ])
   })
 
-  it('зберігає стан після IP, навіть якщо перший блок видалили під час визначення', async () => {
+  it('saves state after IP lookup even if the first block was removed during it', async () => {
     const ip = deferred<City | null>()
     vi.mocked(getCityByIp).mockReturnValue(ip.promise)
     const store = useBlocksStore()
@@ -201,7 +201,7 @@ describe('blocks store', () => {
     ])
   })
 
-  it('блоки з однаковими id вважаються пошкодженими', () => {
+  it('blocks with duplicate ids are considered corrupted', () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify([
@@ -215,7 +215,7 @@ describe('blocks store', () => {
     expect(store.locating).toBe(true)
   })
 
-  it('add створює унікальні id без crypto.randomUUID', () => {
+  it('add creates unique ids without crypto.randomUUID', () => {
     vi.stubGlobal('crypto', {})
     try {
       const store = useBlocksStore()
@@ -229,12 +229,12 @@ describe('blocks store', () => {
     }
   })
 
-  describe('синхронізація між вкладками', () => {
+  describe('cross-tab synchronization', () => {
     afterEach(() => {
       localStorage.clear()
     })
 
-    it('перечитує блоки з події storage свого ключа', () => {
+    it('rereads blocks from a storage event of its own key', () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([{ id: 'a', city: null }]))
       const store = freshStore()
       const next = JSON.stringify([
@@ -247,7 +247,7 @@ describe('blocks store', () => {
       expect(store.blocks[0]?.city).toEqual(LVIV)
     })
 
-    it('ігнорує чужі ключі та пошкоджені дані', () => {
+    it('ignores foreign keys and corrupted data', () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([{ id: 'a', city: LVIV }]))
       const store = freshStore()
       window.dispatchEvent(new StorageEvent('storage', { key: 'other', newValue: '[]' }))
@@ -256,7 +256,7 @@ describe('blocks store', () => {
       expect(store.blocks).toEqual([{ id: 'a', city: LVIV }])
     })
 
-    it('блоки з іншої вкладки під час визначення IP не перетираються містом за IP', async () => {
+    it('blocks from another tab during IP lookup are not overwritten by the IP city', async () => {
       const ip = deferred<City | null>()
       vi.mocked(getCityByIp).mockReturnValue(ip.promise)
       const store = useBlocksStore()

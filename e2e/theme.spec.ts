@@ -23,7 +23,7 @@ test.beforeEach(async ({ page }) => {
   await mockApi(page)
 })
 
-test('темна тема не блимає світлою при завантаженні', async ({ page }) => {
+test('dark theme does not flash light on load', async ({ page }) => {
   const seen = await recordThemes(page, { 'weather:theme': '"dark"' })
   await page.goto('/')
   await expect(page.getByTestId('weather-block')).toBeVisible()
@@ -32,7 +32,7 @@ test('темна тема не блимає світлою при заванта
   expect(seen.some((value) => value.startsWith('light'))).toBe(false)
 })
 
-test('«Авто» вночі стартує з темної теми без спалаху', async ({ page }) => {
+test('"Auto" mode at night starts with the dark theme without a flash', async ({ page }) => {
   const seen = await recordThemes(page, {
     'weather:theme': '"auto"',
     'weather:daylight': 'false',
@@ -47,10 +47,10 @@ test('«Авто» вночі стартує з темної теми без с�
   )
 })
 
-test.describe('система з темною схемою', () => {
+test.describe('system with a dark color scheme', () => {
   test.use({ colorScheme: 'dark' })
 
-  test('«Авто» без збереженого стану стартує з теми системи', async ({ page }) => {
+  test('"Auto" mode without a saved state starts with the system theme', async ({ page }) => {
     const seen = await recordThemes(page, {})
     await page.goto('/')
     await expect(page.getByTestId('weather-block')).toBeVisible()
@@ -60,7 +60,7 @@ test.describe('система з темною схемою', () => {
   })
 })
 
-test('ручний вибір теми змінює data-theme і зберігається після перезавантаження', async ({
+test('manual theme choice changes data-theme and persists after a reload', async ({
   page,
 }) => {
   const html = page.locator('html')

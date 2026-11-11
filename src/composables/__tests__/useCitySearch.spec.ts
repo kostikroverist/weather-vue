@@ -74,7 +74,7 @@ describe('useCitySearch', () => {
     vi.useRealTimers()
   })
 
-  it('не шукає для одного символу', async () => {
+  it('does not search for a single character', async () => {
     const search = setup()
     search.query.value = 'К'
     await vi.advanceTimersByTimeAsync(300)
@@ -82,7 +82,7 @@ describe('useCitySearch', () => {
     expect(search.results.value).toEqual([])
   })
 
-  it('чекає 300 мс після останнього символу', async () => {
+  it('waits 300 ms after the last character', async () => {
     const search = setup()
     search.query.value = 'Ки'
     await vi.advanceTimersByTimeAsync(100)
@@ -94,7 +94,7 @@ describe('useCitySearch', () => {
     expect(search.loading.value).toBe(false)
   })
 
-  it('показує loading уже під час очікування debounce', async () => {
+  it('shows loading already while waiting for debounce', async () => {
     const search = setup()
     search.query.value = 'Ки'
     await vi.advanceTimersByTimeAsync(100)
@@ -102,7 +102,7 @@ describe('useCitySearch', () => {
     expect(mocked).not.toHaveBeenCalled()
   })
 
-  it('другий пошук скасовує перший', async () => {
+  it('a second search cancels the first', async () => {
     mocked.mockReturnValue(new Promise(() => {}))
     const search = setup()
     search.query.value = 'Ки'
@@ -114,7 +114,7 @@ describe('useCitySearch', () => {
     expect(mocked.mock.calls[1]?.[1]?.aborted).toBe(false)
   })
 
-  it('пізня відповідь першого запиту не перезаписує другий', async () => {
+  it('a late response of the first request does not overwrite the second', async () => {
     const first = deferred<City[]>()
     const second = deferred<City[]>()
     mocked.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
@@ -131,7 +131,7 @@ describe('useCitySearch', () => {
     expect(search.loading.value).toBe(false)
   })
 
-  it('CanceledError після скасування запиту не ставить error', async () => {
+  it('CanceledError after request cancellation does not set error', async () => {
     mocked.mockImplementation(
       (_q, signal) =>
         new Promise<City[]>((_resolve, reject) => {
@@ -147,7 +147,7 @@ describe('useCitySearch', () => {
     expect(search.loading.value).toBe(true)
   })
 
-  it('інша помилка ставить error', async () => {
+  it('another error sets error', async () => {
     mocked.mockRejectedValue(new Error('network'))
     const search = setup()
     search.query.value = 'Ки'
@@ -157,7 +157,7 @@ describe('useCitySearch', () => {
     expect(search.loading.value).toBe(false)
   })
 
-  it('clear скидає запит і результати', async () => {
+  it('clear resets the query and results', async () => {
     const search = setup()
     search.query.value = 'Ки'
     await vi.advanceTimersByTimeAsync(300)
@@ -168,7 +168,7 @@ describe('useCitySearch', () => {
     expect(mocked).toHaveBeenCalledTimes(1)
   })
 
-  it('повторює активний пошук при зміні мови', async () => {
+  it('repeats the active search when the language changes', async () => {
     const search = setup()
     search.query.value = 'Ки'
     await vi.advanceTimersByTimeAsync(300)
@@ -182,7 +182,7 @@ describe('useCitySearch', () => {
     expect(search.results.value).toEqual([kyivCity])
   })
 
-  it('лишає тільки міста, назва яких починається із запиту', async () => {
+  it('keeps only cities whose name starts with the query', async () => {
     mocked.mockResolvedValue([KYIV, TAIKKYI])
     const search = setup()
     search.query.value = 'Kyi'
@@ -192,7 +192,7 @@ describe('useCitySearch', () => {
     expect(search.results.value).toEqual([KYIV])
   })
 
-  it('нерелевантна відповідь дає порожній результат без помилки', async () => {
+  it('an irrelevant response yields an empty result without an error', async () => {
     mocked.mockResolvedValue([RIGA])
     const search = setup()
     search.query.value = 'Льв'
@@ -203,7 +203,7 @@ describe('useCitySearch', () => {
     expect(search.loading.value).toBe(false)
   })
 
-  it('відповідь старого запиту під час debounce нового нічого не змінює', async () => {
+  it('a response of an old request during debounce of a new one changes nothing', async () => {
     const first = deferred<City[]>()
     const second = deferred<City[]>()
     mocked.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
@@ -225,7 +225,7 @@ describe('useCitySearch', () => {
     expect(search.loading.value).toBe(false)
   })
 
-  it('новий ввід одразу прибирає старий список', async () => {
+  it('new input immediately clears the old list', async () => {
     const search = setup()
     search.query.value = 'Ки'
     await vi.advanceTimersByTimeAsync(300)
@@ -237,7 +237,7 @@ describe('useCitySearch', () => {
     expect(search.loading.value).toBe(true)
   })
 
-  it('retry після помилки повторює запит і знімає error', async () => {
+  it('retry after an error repeats the request and clears error', async () => {
     mocked.mockRejectedValueOnce(new Error('network'))
     const search = setup()
     search.query.value = 'Ки'
@@ -253,7 +253,7 @@ describe('useCitySearch', () => {
     expect(search.results.value).toEqual([KYIV])
   })
 
-  it('без активного запиту зміна мови нічого не шукає', async () => {
+  it('without an active query a language change searches nothing', async () => {
     const search = setup()
     search.query.value = 'К'
     await vi.advanceTimersByTimeAsync(300)

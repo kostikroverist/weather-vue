@@ -3,14 +3,14 @@ import { mockApi, mockIp } from './support/mockApi.js'
 
 const LVIV = { lat: 49.8397, lon: 24.0297 }
 
-test('місто за IP підставляється в перший блок', async ({ page }) => {
+test('the IP city is put into the first block', async ({ page }) => {
   await mockApi(page)
   await mockIp(page, LVIV)
   await page.goto('/')
   await expect(page.getByTestId('city-input')).toHaveValue(/^Львів, /)
 })
 
-test('після перезавантаження обране місто з IP не блимає Києвом', async ({ page }) => {
+test('after a reload the IP city does not flash Kyiv', async ({ page }) => {
   await mockApi(page)
   await mockIp(page, LVIV)
   await page.goto('/')

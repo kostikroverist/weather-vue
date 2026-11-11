@@ -97,7 +97,7 @@ describe('WeatherBlock', () => {
     weatherState.reload.mockClear()
   })
 
-  it('у режимі readonly показує назву замість пошуку і кнопку «Прибрати»', () => {
+  it('in readonly mode shows the name instead of search and the "Remove" button', () => {
     const wrapper = mountBlock({ readonly: true, removable: true })
     expect(wrapper.find('[data-testid="city-input"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="block-remove"]').exists()).toBe(false)
@@ -105,19 +105,19 @@ describe('WeatherBlock', () => {
     expect(wrapper.find('[data-testid="fav-button"]').text()).toBe('★ Прибрати')
   })
 
-  it('без removable немає кнопки видалення', () => {
+  it('has no remove button without removable', () => {
     const wrapper = mountBlock({ removable: false })
     expect(wrapper.find('[data-testid="city-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="block-remove"]').exists()).toBe(false)
   })
 
-  it('з removable показує кнопку видалення і емітить remove', async () => {
+  it('with removable shows the remove button and emits remove', async () => {
     const wrapper = mountBlock({ removable: true })
     await wrapper.find('[data-testid="block-remove"]').trigger('click')
     expect(wrapper.emitted('remove')).toHaveLength(1)
   })
 
-  it('режим «День» показує 8 комірок смуги', () => {
+  it('"Day" mode shows 8 strip cells', () => {
     const wrapper = mountBlock({})
     expect(wrapper.findAll('[data-testid="strip-cell"]')).toHaveLength(8)
     expect(wrapper.find('[data-testid="precip-summary"]').text()).toBe(
@@ -125,13 +125,13 @@ describe('WeatherBlock', () => {
     )
   })
 
-  it('режим «День» передає графіку 8 погодинних точок', () => {
+  it('"Day" mode passes 8 hourly points to the chart', () => {
     const chart = mountBlock({}).findComponent(TempChart)
     expect(chart.props('labels')).toEqual(hours.map((h) => h.time))
     expect(chart.props('temps')).toEqual(hours.map((h) => h.temp))
   })
 
-  it('режим «5 днів» показує огляд: 5 плиток, сьогодні в рамці, графік і смуга по днях', async () => {
+  it('"5 days" mode shows the overview: 5 tiles, today framed, chart and per-day strip', async () => {
     const wrapper = mountBlock({})
     await wrapper.find('[data-testid="mode-days"]').trigger('click')
     const tiles = wrapper.findAll('[data-testid="day-tile"]')
@@ -152,7 +152,7 @@ describe('WeatherBlock', () => {
     expect(cells[1]!.text()).toContain('Пн')
   })
 
-  it('рамка «сьогодні» стоїть на плитці з датою todayKey і має aria-current', async () => {
+  it('the today frame is on the tile with the todayKey date and has aria-current', async () => {
     weatherState.todayKey = '2026-11-11'
     const wrapper = mountBlock({})
     await wrapper.find('[data-testid="mode-days"]').trigger('click')
@@ -168,7 +168,7 @@ describe('WeatherBlock', () => {
     expect(tiles[0]!.attributes('aria-current')).toBeUndefined()
   })
 
-  it('без сьогоднішньої дати в прогнозі рамки «сьогодні» немає', async () => {
+  it('there is no today frame when the forecast has no today date', async () => {
     weatherState.todayKey = '2026-11-09'
     const wrapper = mountBlock({})
     await wrapper.find('[data-testid="mode-days"]').trigger('click')
@@ -176,13 +176,13 @@ describe('WeatherBlock', () => {
     expect(wrapper.findAll('[aria-current="date"]')).toHaveLength(0)
   })
 
-  it('основний блок передає темі isDay поточної погоди', () => {
+  it('the main block passes isDay of the current weather to the theme', () => {
     weatherState.isDay = false
     mountBlock({ primary: true })
     expect(useThemeStore().daylight).toBe(false)
   })
 
-  it('клік по плитці відкриває погоду дня по годинах, «Назад» повертає огляд', async () => {
+  it('clicking a tile opens the hourly weather of the day, "Back" returns to the overview', async () => {
     const wrapper = mountBlock({})
     await wrapper.find('[data-testid="mode-days"]').trigger('click')
     await wrapper.findAll('[data-testid="day-tile"]')[1]!.trigger('click')
@@ -208,7 +208,7 @@ describe('WeatherBlock', () => {
     expect(wrapper.find('[data-testid="days-back"]').exists()).toBe(false)
   })
 
-  it('повторний клік по вибраній плитці повертає огляд', async () => {
+  it('clicking the selected tile again returns to the overview', async () => {
     const wrapper = mountBlock({})
     await wrapper.find('[data-testid="mode-days"]').trigger('click')
     await wrapper.findAll('[data-testid="day-tile"]')[2]!.trigger('click')
@@ -218,7 +218,7 @@ describe('WeatherBlock', () => {
     expect(wrapper.findComponent(TempChart).props('labels')).toHaveLength(5)
   })
 
-  it('перемикання режиму скидає вибраний день', async () => {
+  it('switching the mode resets the selected day', async () => {
     const wrapper = mountBlock({})
     await wrapper.find('[data-testid="mode-days"]').trigger('click')
     await wrapper.findAll('[data-testid="day-tile"]')[1]!.trigger('click')
@@ -228,7 +228,7 @@ describe('WeatherBlock', () => {
     expect(wrapper.findAll('[data-testid="strip-cell"]')).toHaveLength(5)
   })
 
-  it('зміна міста скидає вибраний день', async () => {
+  it('changing the city resets the selected day', async () => {
     const wrapper = mountBlock({})
     await wrapper.find('[data-testid="mode-days"]').trigger('click')
     await wrapper.findAll('[data-testid="day-tile"]')[1]!.trigger('click')
@@ -237,31 +237,31 @@ describe('WeatherBlock', () => {
     expect(wrapper.findAll('[data-testid="strip-cell"]')).toHaveLength(5)
   })
 
-  it('картка без події сонця (полярний день/ніч) показує 3 показники', () => {
+  it('a card without a sun event (polar day/night) shows 3 metrics', () => {
     const card = mount(CurrentCard, { props: { current: { ...current, sunEvent: null } } })
     const labels = card.findAll('dt').map((dt) => dt.text())
     expect(labels).toEqual(['Вологість', 'Вітер', 'Тиск'])
   })
 
-  it('перемикач режиму має aria-label', () => {
+  it('the mode switch has aria-label', () => {
     const wrapper = mountBlock({})
     expect(wrapper.findComponent(BaseSegmented).attributes('aria-label')).toBe('Режим відображення')
   })
 
-  it('поки визначається місто, показує скелетон', () => {
+  it('shows a skeleton while the city is being determined', () => {
     const wrapper = mountBlock({ city: null, locating: true })
     expect(wrapper.find('[data-testid="block-skeleton"]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Знайдіть місто, щоб побачити погоду')
   })
 
-  it('порожній блок показує тільки пошук і підказку', () => {
+  it('an empty block shows only search and a hint', () => {
     const wrapper = mountBlock({ city: null })
     expect(wrapper.find('[data-testid="city-input"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="fav-button"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Знайдіть місто, щоб побачити погоду')
   })
 
-  it('focusSearch() фокусує інпут пошуку', () => {
+  it('focusSearch() focuses the search input', () => {
     const wrapper = mount(WeatherBlock, {
       props: { city: KYIV },
       global: { stubs: { TempChart: true } },
@@ -272,7 +272,7 @@ describe('WeatherBlock', () => {
     wrapper.unmount()
   })
 
-  it('показує «Оновлено» і кнопка оновлення викликає reload', async () => {
+  it('shows "Updated" and the refresh button calls reload', async () => {
     const wrapper = mountBlock({})
     expect(wrapper.find('[data-testid="updated-at"]').text()).toMatch(/^Оновлено \d{2}:\d{2}$/)
     await wrapper.find('[data-testid="refresh"]').trigger('click')

@@ -20,7 +20,7 @@ describe('favorites store', () => {
     localStorage.clear()
   })
 
-  it('toggle додає місто, повторний toggle прибирає', () => {
+  it('toggle adds a city, a second toggle removes it', () => {
     const store = useFavoritesStore()
     store.toggle(city(1))
     expect(store.isFavorite(city(1).id)).toBe(true)
@@ -30,7 +30,7 @@ describe('favorites store', () => {
     expect(store.count).toBe(0)
   })
 
-  it('шосте місто не додається, а стає pendingCity', () => {
+  it('the sixth city is not added and becomes pendingCity', () => {
     const store = useFavoritesStore()
     for (let i = 1; i <= FAVORITES_MAX; i++) store.toggle(city(i))
     store.toggle(city(6))
@@ -39,7 +39,7 @@ describe('favorites store', () => {
     expect(store.pendingCity).toEqual(city(6))
   })
 
-  it('remove при наявному pendingCity додає його і обнуляє pendingCity', () => {
+  it('remove with an existing pendingCity adds it and resets pendingCity', () => {
     const store = useFavoritesStore()
     for (let i = 1; i <= FAVORITES_MAX; i++) store.toggle(city(i))
     store.toggle(city(6))
@@ -50,7 +50,7 @@ describe('favorites store', () => {
     expect(store.pendingCity).toBeNull()
   })
 
-  it('cancelPending обнуляє pendingCity', () => {
+  it('cancelPending resets pendingCity', () => {
     const store = useFavoritesStore()
     for (let i = 1; i <= FAVORITES_MAX; i++) store.toggle(city(i))
     store.toggle(city(6))
@@ -59,7 +59,7 @@ describe('favorites store', () => {
     expect(store.count).toBe(5)
   })
 
-  it('після зміни зберігає список у localStorage', async () => {
+  it('saves the list to localStorage after a change', async () => {
     const store = useFavoritesStore()
     store.toggle(city(1))
     store.toggle(city(2))
@@ -67,7 +67,7 @@ describe('favorites store', () => {
     expect(localStorage.getItem(KEY)).toBe(JSON.stringify([city(1), city(2)]))
   })
 
-  it('читає валідний список з localStorage', () => {
+  it('reads a valid list from localStorage', () => {
     localStorage.setItem(KEY, JSON.stringify([city(1)]))
     expect(useFavoritesStore().items).toEqual([city(1)])
   })
@@ -78,12 +78,12 @@ describe('favorites store', () => {
     '{"a":1}',
     JSON.stringify([city(1), city(1)]),
     JSON.stringify([1, 2, 3, 4, 5, 6].map(city)),
-  ])('пошкоджений localStorage %s дає []', (raw) => {
+  ])('corrupted localStorage %s yields []', (raw) => {
     localStorage.setItem(KEY, raw)
     expect(useFavoritesStore().items).toEqual([])
   })
 
-  it('перечитує обране з події storage свого ключа', () => {
+  it('rereads favorites from a storage event of its own key', () => {
     const store = useFavoritesStore()
     const next = JSON.stringify([city(2), city(3)])
     localStorage.setItem(KEY, next)
@@ -91,7 +91,7 @@ describe('favorites store', () => {
     expect(store.items).toEqual([city(2), city(3)])
   })
 
-  it('подія storage з пошкодженими даними дає [], чужий ключ ігнорується', () => {
+  it('a storage event with corrupted data yields [], a foreign key is ignored', () => {
     localStorage.setItem(KEY, JSON.stringify([city(1)]))
     const store = useFavoritesStore()
     window.dispatchEvent(new StorageEvent('storage', { key: 'other', newValue: '[]' }))

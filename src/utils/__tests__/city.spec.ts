@@ -15,7 +15,7 @@ describe('city', () => {
     locale.value = 'uk'
   })
 
-  it('toCity бере local_names і формує id з координат', () => {
+  it('toCity takes local_names and builds the id from coordinates', () => {
     expect(
       toCity({
         name: 'Kyiv',
@@ -35,23 +35,23 @@ describe('city', () => {
     })
   })
 
-  it('toCity без local_names бере name', () => {
+  it('toCity without local_names takes name', () => {
     expect(toCity({ name: 'Lviv', lat: 49.8419, lon: 24.0315, country: 'UA' }).names).toEqual({
       uk: 'Lviv',
       en: 'Lviv',
     })
   })
 
-  it('toCity округлює координати в id до 2 знаків', () => {
+  it('toCity rounds coordinates in the id to 2 decimals', () => {
     expect(toCity({ name: 'A', lat: 50.4549, lon: 30.5151, country: 'UA' }).id).toBe('50.45,30.52')
   })
 
-  it('cityLabel показує тільки назву і країну', () => {
+  it('cityLabel shows only the name and the country', () => {
     expect(cityLabel(KYIV)).toBe('Київ, UA')
     expect(cityLabel({ ...KYIV, state: 'Kyiv Oblast' })).toBe('Київ, UA')
   })
 
-  it('cityOptionLabel показує область, тільки якщо вона відрізняється від назви', () => {
+  it('cityOptionLabel shows the region only if it differs from the name', () => {
     expect(cityOptionLabel(KYIV)).toBe('Київ, UA')
     expect(cityOptionLabel({ ...KYIV, state: 'Київська область' })).toBe(
       'Київ, Київська область, UA',
@@ -59,7 +59,7 @@ describe('city', () => {
     expect(cityOptionLabel({ ...KYIV, state: 'Київ' })).toBe('Київ, UA')
   })
 
-  it('cityName і cityLabel беруть назву поточної мови', () => {
+  it('cityName and cityLabel take the name in the current language', () => {
     expect(cityName(KYIV)).toBe('Київ')
     locale.value = 'en'
     expect(cityName(KYIV)).toBe('Kyiv')
@@ -68,12 +68,12 @@ describe('city', () => {
     expect(cityOptionLabel({ ...KYIV, state: 'Kyiv Oblast' })).toBe('Kyiv, Kyiv Oblast, UA')
   })
 
-  it('isCity відкидає неповні обʼєкти', () => {
+  it('isCity rejects incomplete objects', () => {
     expect(isCity({ id: 'x' })).toBe(false)
     expect(isCity(KYIV)).toBe(true)
   })
 
-  it('matchesQuery перевіряє початок назви будь-якою мовою без регістру', () => {
+  it('matchesQuery checks the start of the name in any language, case-insensitive', () => {
     const lviv = { ...KYIV, names: { uk: 'Львів', en: 'Lviv' } }
     const taikkyi = { ...KYIV, names: { uk: 'Taikkyi', en: 'Taikkyi' } }
     expect(matchesQuery(lviv, 'Льв')).toBe(true)

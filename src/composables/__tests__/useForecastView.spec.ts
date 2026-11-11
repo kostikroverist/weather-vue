@@ -14,7 +14,7 @@ const daysFrom = (start: number): DayPoint[] =>
   )
 
 describe('useForecastView', () => {
-  it('скидає вибраний день, якщо після перезапиту його немає в списку днів', async () => {
+  it('resets the selected day if it is missing from the day list after a refetch', async () => {
     const hours = ref<HourPoint[]>([])
     const days = ref<DayPoint[]>(daysFrom(T0))
     const scope = effectScope()
@@ -30,7 +30,7 @@ describe('useForecastView', () => {
     scope.stop()
   })
 
-  it('лишає вибраний день, якщо він є в оновленому списку', async () => {
+  it('keeps the selected day if it is in the updated list', async () => {
     const hours = ref<HourPoint[]>([])
     const days = ref<DayPoint[]>(daysFrom(T0))
     const scope = effectScope()

@@ -35,7 +35,7 @@ test.beforeEach(async ({ page }) => {
   await mockApi(page)
 })
 
-test('1. початковий блок з Києвом, графіком, смугою і підсумком опадів', async ({ page }) => {
+test('1. initial block with Kyiv, chart, strip and precipitation summary', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('weather-block')).toHaveCount(1)
   await expect(page.getByTestId('city-input')).toHaveValue('Київ, UA')
@@ -49,7 +49,7 @@ test('1. початковий блок з Києвом, графіком, сму
   await reload
 })
 
-test('2. пошук міста з вибором клавіатурою', async ({ page }) => {
+test('2. city search with keyboard selection', async ({ page }) => {
   await page.goto('/')
   const input = page.getByTestId('city-input')
   await input.click()
@@ -60,7 +60,7 @@ test('2. пошук міста з вибором клавіатурою', async 
   await expect(input).toHaveValue(/Львів/)
 })
 
-test('2a. пошук за англійською назвою показує місто мовою інтерфейсу', async ({ page }) => {
+test('2a. search by English name shows the city in the interface language', async ({ page }) => {
   await page.goto('/')
   const input = page.getByTestId('city-input')
   await input.click()
@@ -69,7 +69,7 @@ test('2a. пошук за англійською назвою показує м�
   await expect(page.getByTestId('city-option')).toHaveText('Київ, Kyiv City, UA')
 })
 
-test('2b. неповна назва дає «Місто не знайдено»', async ({ page }) => {
+test('2b. a partial name yields "City not found"', async ({ page }) => {
   await page.goto('/')
   const input = page.getByTestId('city-input')
   await input.click()
@@ -78,7 +78,7 @@ test('2b. неповна назва дає «Місто не знайдено»'
   await expect(page.getByTestId('city-option')).toHaveCount(0)
 })
 
-test('2c. клієнтський фільтр відкидає міста, назва яких не починається з запиту', async ({
+test('2c. client-side filter rejects cities whose name does not start with the query', async ({
   page,
 }) => {
   await page.route('**/geo/1.0/direct**', (route) =>
@@ -102,7 +102,7 @@ test('2c. клієнтський фільтр відкидає міста, на�
   await expect(page.getByTestId('city-option')).toHaveCount(0)
 })
 
-test('3. максимум 5 блоків', async ({ page }) => {
+test('3. maximum of 5 blocks', async ({ page }) => {
   await page.goto('/')
   const add = page.getByTestId('add-block')
   for (let i = 0; i < 4; i++) {
@@ -114,7 +114,7 @@ test('3. максимум 5 блоків', async ({ page }) => {
   await expect(page.getByText('Максимум 5 блоків')).toBeVisible()
 })
 
-test('4. видалення блоку з підтвердженням', async ({ page }) => {
+test('4. block removal with confirmation', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('add-block').click()
   const blocks = page.getByTestId('weather-block')
@@ -136,7 +136,7 @@ test('4. видалення блоку з підтвердженням', async (
   await expect(page.getByTestId('add-block')).toBeFocused()
 })
 
-test('5. додавання в обране, вкладка «Вибране», перезавантаження, прибирання', async ({ page }) => {
+test('5. adding to favorites, the "Favorites" tab, reload, removal', async ({ page }) => {
   await page.goto('/')
   const fav = page.getByTestId('fav-button')
   await fav.click()
@@ -156,7 +156,7 @@ test('5. додавання в обране, вкладка «Вибране», 
   await expect(page.getByTestId('favorites-empty')).toBeVisible()
 })
 
-test('6. ліміт обраного: заміна міста через модалку', async ({ page }) => {
+test('6. favorites limit: replacing a city via the modal', async ({ page }) => {
   await seedFavorites(page, FULL_FAVORITES)
   await page.goto('/')
   await page.getByTestId('fav-button').click()
@@ -172,7 +172,7 @@ test('6. ліміт обраного: заміна міста через мод�
   await expect(page.getByTestId('fav-button')).toHaveText('★ В обраному')
 })
 
-test('6a. ліміт обраного: «Скасувати» і Esc закривають без змін', async ({ page }) => {
+test('6a. favorites limit: "Cancel" and Esc close without changes', async ({ page }) => {
   await seedFavorites(page, FULL_FAVORITES)
   await page.goto('/')
   const fav = page.getByTestId('fav-button')
@@ -197,7 +197,7 @@ test('6a. ліміт обраного: «Скасувати» і Esc закри�
   expect(await stored()).toBe(before)
 })
 
-test('7. режим «5 днів»: огляд, погодинна деталізація дня і повернення', async ({ page }) => {
+test('7. "5 days" mode: overview, hourly day detail and return', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('mode-days').click()
   const tiles = page.getByTestId('day-tile')
@@ -236,7 +236,7 @@ test('7. режим «5 днів»: огляд, погодинна деталі�
   await expect(tiles.nth(1)).toHaveAttribute('aria-pressed', 'false')
 })
 
-test('9. блоки головної зберігаються після перезавантаження', async ({ page }) => {
+test('9. home blocks persist after a reload', async ({ page }) => {
   await page.goto('/')
   const input = page.getByTestId('city-input')
   await expect(input).toHaveValue('Київ, UA')
@@ -253,7 +253,7 @@ test('9. блоки головної зберігаються після пер�
   await expect(page.getByTestId('city-input').first()).toHaveValue(/^Львів/)
 })
 
-test('10. зміна міста: до відповіді показується скелетон, а не дані попереднього', async ({
+test('10. city change: a skeleton is shown until the response, not the previous data', async ({
   page,
 }) => {
   await page.goto('/')
@@ -286,7 +286,7 @@ test('10. зміна міста: до відповіді показується 
   await expect(block).toContainText('Львів')
 })
 
-test('8. немає горизонтального скролу на головній, у «5 днях» і в модалці @mobile', async ({
+test('8. no horizontal scroll on home, in "5 days" and in the modal @mobile', async ({
   page,
 }) => {
   await page.goto('/')
@@ -308,7 +308,7 @@ test('8. немає горизонтального скролу на голов�
   expect(await scrollWidth(page)).toBeLessThanOrEqual(360)
 })
 
-test('8a. немає горизонтального скролу з модалкою ліміту обраного @mobile', async ({ page }) => {
+test('8a. no horizontal scroll with the favorites limit modal @mobile', async ({ page }) => {
   await seedFavorites(page, FULL_FAVORITES)
   await page.goto('/')
   await expect(page.getByTestId('temp-chart')).toBeVisible()

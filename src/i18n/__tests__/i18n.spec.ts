@@ -64,7 +64,7 @@ describe('i18n', () => {
     expect(fallback.locale.value).toBe('uk')
   })
 
-  it('formatNumber форматує число за поточною мовою', () => {
+  it('formatNumber formats a number by the current language', () => {
     expect(formatNumber(0.15, 2)).toBe('0,15')
     expect(formatNumber(2.44)).toBe('2,4')
     locale.value = 'en'

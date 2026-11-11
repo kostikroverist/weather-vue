@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
   await mockApi(page)
 })
 
-test('перемикання мови на англійську зберігається після перезавантаження', async ({ page }) => {
+test('switching the language to English persists after a reload', async ({ page }) => {
   await page.goto('/')
   const header = page.getByRole('banner')
   await expect(header.getByRole('link', { name: 'Головна' })).toBeVisible()

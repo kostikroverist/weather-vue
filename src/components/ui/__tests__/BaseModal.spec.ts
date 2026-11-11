@@ -35,7 +35,7 @@ function pressTab(shiftKey = false): KeyboardEvent {
 }
 
 describe('BaseModal', () => {
-  it('рендерить діалог із заголовком у body', () => {
+  it('renders the dialog with a title in body', () => {
     mountModal()
     const dialog = document.body.querySelector('[role=dialog]')
     expect(dialog).not.toBeNull()
@@ -43,19 +43,19 @@ describe('BaseModal', () => {
     expect(dialog?.getAttribute('aria-modal')).toBe('true')
   })
 
-  it('не рендерить діалог, коли закрита', () => {
+  it('does not render the dialog when closed', () => {
     mountModal(false)
     expect(document.body.querySelector('[role=dialog]')).toBeNull()
   })
 
-  it('Escape емітить update:open з false', async () => {
+  it('Escape emits update:open with false', async () => {
     const w = mountModal()
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     await w.vm.$nextTick()
     expect(w.emitted('update:open')?.[0]).toEqual([false])
   })
 
-  it('клік по підкладці емітить update:open з false', async () => {
+  it('clicking the backdrop emits update:open with false', async () => {
     const w = mountModal()
     const backdrop = document.body.querySelector<HTMLElement>('[data-testid="modal-backdrop"]')
     backdrop?.click()
@@ -63,7 +63,7 @@ describe('BaseModal', () => {
     expect(w.emitted('update:open')?.[0]).toEqual([false])
   })
 
-  it('клік всередині діалогу нічого не емітить', async () => {
+  it('clicking inside the dialog emits nothing', async () => {
     const w = mountModal()
     document.body.querySelector<HTMLElement>('[data-testid="inner"]')?.click()
     document.body.querySelector<HTMLElement>('[role=dialog]')?.click()
@@ -71,7 +71,7 @@ describe('BaseModal', () => {
     expect(w.emitted('update:open')).toBeUndefined()
   })
 
-  it('після відкриття фокус переходить на діалог', async () => {
+  it('moves focus to the dialog after opening', async () => {
     addTrigger()
     const w = mountModal(false)
     await w.setProps({ open: true })
@@ -79,7 +79,7 @@ describe('BaseModal', () => {
     expect(document.activeElement).toBe(document.body.querySelector('[role=dialog]'))
   })
 
-  it('після закриття фокус повертається на тригер', async () => {
+  it('returns focus to the trigger after closing', async () => {
     const trigger = addTrigger()
     const w = mountModal(false)
     await w.setProps({ open: true })
@@ -89,7 +89,7 @@ describe('BaseModal', () => {
     expect(document.activeElement).toBe(trigger)
   })
 
-  it('Tab з останнього елемента переходить на перший, Shift+Tab з першого на останній', async () => {
+  it('Tab from the last element moves to the first, Shift+Tab from the first moves to the last', async () => {
     wrapper = mount(BaseModal, {
       props: { open: true, title: 'Заголовок' },
       slots: {
@@ -108,7 +108,7 @@ describe('BaseModal', () => {
     expect(document.activeElement).toBe(last)
   })
 
-  it('без елементів для фокусу Tab лишає фокус на діалозі', async () => {
+  it('keeps focus on the dialog when there are no focusable elements', async () => {
     mountModal()
     await flushPromises()
     const dialog = document.body.querySelector('[role=dialog]')
@@ -116,7 +116,7 @@ describe('BaseModal', () => {
     expect(document.activeElement).toBe(dialog)
   })
 
-  it('блокує скрол body, поки відкрита, і відновлює попереднє значення', async () => {
+  it('locks body scroll while open and restores the previous value', async () => {
     document.body.style.overflow = 'auto'
     const w = mountModal(false)
     await w.setProps({ open: true })
@@ -127,7 +127,7 @@ describe('BaseModal', () => {
     expect(document.body.style.overflow).toBe('auto')
   })
 
-  it('відновлює скрол body при unmount відкритої модалки', async () => {
+  it('restores body scroll when an open modal is unmounted', async () => {
     document.body.style.overflow = 'scroll'
     const w = mountModal()
     await flushPromises()

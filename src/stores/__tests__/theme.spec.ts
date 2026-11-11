@@ -63,7 +63,7 @@ describe('theme store', () => {
     expect(document.documentElement.dataset.theme).toBe('light')
   })
 
-  it('запамʼятовує день чи ніч і стартує з останнього значення', async () => {
+  it('remembers day or night and starts from the last value', async () => {
     const store = useThemeStore()
     store.setDaylight(false)
     await nextTick()
@@ -74,12 +74,12 @@ describe('theme store', () => {
     expect(restored.resolved).toBe('dark')
   })
 
-  it('невалідне збережене значення дня дає день', () => {
+  it('an invalid saved value yields day', () => {
     localStorage.setItem('weather:daylight', '"yes"')
     expect(useThemeStore().daylight).toBe(true)
   })
 
-  describe('без збереженого дня бере системну тему', () => {
+  describe('without a saved value uses the system theme', () => {
     function mockPrefersDark(dark: boolean) {
       vi.stubGlobal(
         'matchMedia',
@@ -91,19 +91,19 @@ describe('theme store', () => {
       vi.unstubAllGlobals()
     })
 
-    it('система темна -> ніч', () => {
+    it('dark system -> night', () => {
       mockPrefersDark(true)
       const store = useThemeStore()
       expect(store.daylight).toBe(false)
       expect(store.resolved).toBe('dark')
     })
 
-    it('система світла -> день', () => {
+    it('light system -> day', () => {
       mockPrefersDark(false)
       expect(useThemeStore().daylight).toBe(true)
     })
 
-    it('збережене значення важливіше за систему', () => {
+    it('the saved value takes priority over the system', () => {
       mockPrefersDark(true)
       localStorage.setItem('weather:daylight', 'true')
       expect(useThemeStore().daylight).toBe(true)

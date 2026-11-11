@@ -41,7 +41,7 @@ describe('CitySearch', () => {
     retry.mockReset()
   })
 
-  it('має aria-label і без списку не має aria-controls', () => {
+  it('has aria-label and no aria-controls without a list', () => {
     const wrapper = mount(CitySearch)
     const input = wrapper.get('[data-testid="city-input"]')
     expect(input.attributes('aria-label')).toBe('Пошук міста')
@@ -49,14 +49,14 @@ describe('CitySearch', () => {
     expect(input.attributes('aria-expanded')).toBe('false')
   })
 
-  it('під час завантаження aria-controls відсутній', async () => {
+  it('has no aria-controls while loading', async () => {
     loading.value = true
     const { input } = await typed()
     expect(input.attributes('aria-controls')).toBeUndefined()
     expect(input.attributes('aria-expanded')).toBe('false')
   })
 
-  it('відкритий список: aria-controls збігається з id listbox', async () => {
+  it('open list: aria-controls matches the listbox id', async () => {
     results.value = [KYIV, LVIV]
     const { wrapper, input } = await typed()
     const list = wrapper.get('[role="listbox"]')
@@ -68,7 +68,7 @@ describe('CitySearch', () => {
     expect(options[0]?.attributes('aria-selected')).toBe('false')
   })
 
-  it('стрілка вниз підсвічує опцію і ставить aria-activedescendant', async () => {
+  it('arrow down highlights an option and sets aria-activedescendant', async () => {
     results.value = [KYIV, LVIV]
     const { wrapper, input } = await typed()
     await input.trigger('keydown', { key: 'ArrowDown' })
@@ -77,14 +77,14 @@ describe('CitySearch', () => {
     expect(first?.attributes('aria-selected')).toBe('true')
   })
 
-  it('Enter без підсвіченого пункту вибирає перший', async () => {
+  it('Enter without a highlighted item selects the first one', async () => {
     results.value = [KYIV, LVIV]
     const { wrapper, input } = await typed()
     await input.trigger('keydown', { key: 'Enter' })
     expect(wrapper.emitted('update:city')?.[0]).toEqual([KYIV])
   })
 
-  it('під час завантаження стрілки й Enter не діють', async () => {
+  it('arrows and Enter do nothing while loading', async () => {
     results.value = [KYIV]
     loading.value = true
     const { wrapper, input } = await typed()
@@ -94,7 +94,7 @@ describe('CitySearch', () => {
     expect(wrapper.emitted('update:city')).toBeUndefined()
   })
 
-  it('у стані помилки кнопка повтору викликає retry', async () => {
+  it('in the error state the retry button calls retry', async () => {
     error.value = true
     const { wrapper } = await typed()
     expect(wrapper.text()).toContain('Не вдалося завантажити список міст')
@@ -104,7 +104,7 @@ describe('CitySearch', () => {
     expect(retry).toHaveBeenCalledTimes(1)
   })
 
-  it('Tab з інпута на кнопку повтору не закриває список', async () => {
+  it('Tab from the input to the retry button does not close the list', async () => {
     error.value = true
     const { wrapper, input } = await typed()
     const button = wrapper.get('[data-testid="city-retry"]')
@@ -113,7 +113,7 @@ describe('CitySearch', () => {
     expect(wrapper.find('[data-testid="city-retry"]').exists()).toBe(true)
   })
 
-  it('втрата фокусу назовні закриває список', async () => {
+  it('focus moving outside closes the list', async () => {
     results.value = [KYIV]
     const { wrapper, input } = await typed()
     await input.trigger('focusout', { relatedTarget: document.body })
@@ -121,7 +121,7 @@ describe('CitySearch', () => {
     expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
   })
 
-  it('Escape на кнопці повтору закриває список', async () => {
+  it('Escape on the retry button closes the list', async () => {
     error.value = true
     const { wrapper } = await typed()
     await wrapper.get('[data-testid="city-retry"]').trigger('keydown', { key: 'Escape' })
@@ -129,7 +129,7 @@ describe('CitySearch', () => {
     expect(wrapper.find('[data-testid="city-retry"]').exists()).toBe(false)
   })
 
-  it('Escape в інпуті закриває список', async () => {
+  it('Escape in the input closes the list', async () => {
     results.value = [KYIV]
     const { wrapper, input } = await typed()
     await input.trigger('keydown', { key: 'Escape' })
@@ -137,14 +137,14 @@ describe('CitySearch', () => {
     expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
   })
 
-  it('Enter у стані помилки викликає retry', async () => {
+  it('Enter in the error state calls retry', async () => {
     error.value = true
     const { input } = await typed()
     await input.trigger('keydown', { key: 'Enter' })
     expect(retry).toHaveBeenCalledTimes(1)
   })
 
-  it('оновлення результатів без вводу скидає підсвічування', async () => {
+  it('updating results without input resets the highlight', async () => {
     results.value = [KYIV, LVIV]
     const { wrapper, input } = await typed()
     await input.trigger('keydown', { key: 'ArrowDown' })
