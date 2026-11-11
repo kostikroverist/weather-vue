@@ -1,0 +1,26 @@
+{
+  "dt": 1794398400,
+  "timezone": 7200,
+  "name": "Kyiv",
+  "weather": [
+    {
+      "id": 803,
+      "main": "Clouds",
+      "description": "хмарно",
+      "icon": "04d"
+    }
+  ],
+  "main": {
+    "temp": 8.4,
+    "feels_like": 6.1,
+    "humidity": 72,
+    "pressure": 1014
+  },
+  "wind": {
+    "speed": 3.2
+  },
+  "sys": {
+    "sunrise": 1794380400,
+    "sunset": 1794416400
+  }
+}

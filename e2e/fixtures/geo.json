@@ -1,0 +1,79 @@
+[
+  {
+    "name": "Kyiv",
+    "local_names": {
+      "en": "Kyiv",
+      "uk": "Київ"
+    },
+    "lat": 50.4501,
+    "lon": 30.5234,
+    "country": "UA",
+    "state": "Kyiv City"
+  },
+  {
+    "name": "Lviv",
+    "local_names": {
+      "en": "Lviv",
+      "uk": "Львів"
+    },
+    "lat": 49.8397,
+    "lon": 24.0297,
+    "country": "UA",
+    "state": "Lviv Oblast"
+  },
+  {
+    "name": "Odesa",
+    "local_names": {
+      "en": "Odesa",
+      "uk": "Одеса"
+    },
+    "lat": 46.4825,
+    "lon": 30.7233,
+    "country": "UA",
+    "state": "Odesa Oblast"
+  },
+  {
+    "name": "Kharkiv",
+    "local_names": {
+      "en": "Kharkiv",
+      "uk": "Харків"
+    },
+    "lat": 49.9935,
+    "lon": 36.2304,
+    "country": "UA",
+    "state": "Kharkiv Oblast"
+  },
+  {
+    "name": "Warsaw",
+    "local_names": {
+      "en": "Warsaw",
+      "uk": "Варшава"
+    },
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "country": "PL",
+    "state": "Mazovia"
+  },
+  {
+    "name": "Tokyo",
+    "local_names": {
+      "en": "Tokyo",
+      "uk": "Токіо"
+    },
+    "lat": 35.6764,
+    "lon": 139.65,
+    "country": "JP",
+    "state": "Tokyo"
+  },
+  {
+    "name": "Lisbon",
+    "local_names": {
+      "en": "Lisbon",
+      "uk": "Лісабон"
+    },
+    "lat": 38.7223,
+    "lon": -9.1393,
+    "country": "PT",
+    "state": "Lisbon"
+  }
+]
