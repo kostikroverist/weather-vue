@@ -1,5 +1,6 @@
 import type { CurrentWeatherResponse, ForecastItem } from '@/types/api'
 import type { CurrentView, DayPoint, HourPoint } from '@/types/forecast'
+import { summarizePrecipitation } from '@/utils/precipitation'
 import { cityDateKey, cityHour, cityTime, cityWeekday } from '@/utils/time'
 
 const round1 = (n: number) => Math.round(n * 10) / 10
@@ -29,6 +30,7 @@ function toDayPoint(dateKey: string, items: ForecastItem[], timezone: number): D
       : best,
   )
   const date = new Date(`${dateKey}T00:00:00Z`)
+  const hours = toHourPoints(items, timezone, items.length)
   return {
     dateKey,
     weekday: cityWeekday(noon.dt, timezone),
@@ -40,13 +42,21 @@ function toDayPoint(dateKey: string, items: ForecastItem[], timezone: number): D
     icon: noon.weather[0]?.icon ?? '',
     pop: toPercent(Math.max(...items.map((item) => item.pop))),
     precipitation: round1(items.reduce((sum, item) => sum + precipitationOf(item), 0)),
+    hours,
+    summary: summarizePrecipitation(hours, timezone),
   }
 }
 
-export function toDayPoints(list: ForecastItem[], timezone: number, days = 5): DayPoint[] {
+export function toDayPoints(
+  list: ForecastItem[],
+  timezone: number,
+  skipDate?: string,
+  days = 5,
+): DayPoint[] {
   const groups = new Map<string, ForecastItem[]>()
   for (const item of list) {
     const key = cityDateKey(item.dt, timezone)
+    if (key === skipDate) continue
     const group = groups.get(key)
     if (group) group.push(item)
     else groups.set(key, [item])

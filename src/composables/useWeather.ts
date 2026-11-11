@@ -1,9 +1,11 @@
 import { ref, watch, type Ref } from 'vue'
+import { locale } from '@/i18n'
 import { getCurrent, getForecast } from '@/services/weather.service'
 import type { City } from '@/types/city'
 import type { CurrentView, DayPoint, HourPoint, PrecipitationSummary } from '@/types/forecast'
 import { toCurrentView, toDayPoints, toHourPoints } from '@/utils/forecast'
 import { summarizePrecipitation } from '@/utils/precipitation'
+import { cityDateKey } from '@/utils/time'
 
 export function useWeather(city: Ref<City | null>) {
   const current = ref<CurrentView | null>(null)
@@ -38,7 +40,11 @@ export function useWeather(city: Ref<City | null>) {
       const timezone = forecastRes.city.timezone
       current.value = toCurrentView(currentRes)
       hours.value = toHourPoints(forecastRes.list, timezone)
-      days.value = toDayPoints(forecastRes.list, timezone)
+      days.value = toDayPoints(
+        forecastRes.list,
+        timezone,
+        cityDateKey(currentRes.dt, currentRes.timezone),
+      )
       precipitation.value = summarizePrecipitation(hours.value, timezone)
     } catch {
       if (id !== requestId) return
@@ -53,7 +59,7 @@ export function useWeather(city: Ref<City | null>) {
     void load()
   }
 
-  watch(city, reload, { immediate: true })
+  watch([city, locale], reload, { immediate: true })
 
   return { current, hours, days, precipitation, loading, error, reload }
 }

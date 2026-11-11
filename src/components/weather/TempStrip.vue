@@ -51,7 +51,7 @@ function iconUrl(icon: string): string {
   gap: 3px;
   min-width: 0;
   padding: 5px 2px;
-  color: var(--ink);
+  color: var(--strip-ink);
   font-size: 10px;
 }
 
@@ -69,13 +69,13 @@ function iconUrl(icon: string): string {
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  color: var(--rain);
+  color: var(--strip-rain);
   font-size: 9px;
   font-weight: 500;
 }
 
 .strip__pop--none {
-  color: var(--muted);
+  color: var(--strip-muted);
   font-weight: 400;
 }
 

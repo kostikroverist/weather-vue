@@ -1,3 +1,4 @@
+import { locale } from '@/i18n'
 import type { GeoResult } from '@/types/api'
 import type { City } from '@/types/city'
 
@@ -20,8 +21,16 @@ export function toCity(g: GeoResult): City {
   }
 }
 
+export function cityName(c: City): string {
+  return c.names[locale.value]
+}
+
 export function cityLabel(c: City): string {
-  const name = c.names.uk
+  return `${cityName(c)}, ${c.country}`
+}
+
+export function cityOptionLabel(c: City): string {
+  const name = cityName(c)
   const parts = c.state && c.state !== name ? [name, c.state, c.country] : [name, c.country]
   return parts.join(', ')
 }

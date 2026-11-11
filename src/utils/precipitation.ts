@@ -1,4 +1,4 @@
-import { t } from '@/i18n'
+import { formatNumber, t, type MessageKey } from '@/i18n'
 import type { HourPoint, PrecipitationKind, PrecipitationSummary } from '@/types/forecast'
 import { cityTime } from '@/utils/time'
 
@@ -6,8 +6,6 @@ const STEP = 10800
 const MAX_RANGES = 2
 
 const amount = (h: HourPoint) => h.rain + h.snow
-
-const numberFormat = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 1 })
 
 function rangesOf(hours: HourPoint[], timezone: number): PrecipitationSummary['ranges'] {
   const groups: HourPoint[][] = []
@@ -44,12 +42,15 @@ export function summarizePrecipitation(
   }
 }
 
-export function precipitationText(summary: PrecipitationSummary | null): string {
-  if (!summary) return t('precip.none')
+export function precipitationText(
+  summary: PrecipitationSummary | null,
+  emptyKey: MessageKey = 'precip.none',
+): string {
+  if (!summary) return t(emptyKey)
   const ranges = summary.ranges.map((range) => t('precip.range', range)).join(t('precip.and'))
   const peak = t('precip.peak', {
     time: summary.peak.time,
-    mm: numberFormat.format(summary.peak.mm),
+    mm: formatNumber(summary.peak.mm),
   })
   return `${t(`precip.${summary.kind}`)} ${ranges}${peak}`
 }

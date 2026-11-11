@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
   BarController,
   BarElement,
@@ -12,7 +12,9 @@ import {
   Tooltip,
   type ChartConfiguration,
 } from 'chart.js'
-import { t } from '@/i18n'
+import { formatNumber, t } from '@/i18n'
+import { useThemeStore } from '@/stores/theme'
+import { formatTemp } from '@/utils/temperature'
 
 Chart.register(
   LineController,
@@ -31,6 +33,7 @@ const props = defineProps<{
   precipitation: number[]
 }>()
 
+const theme = useThemeStore()
 const canvas = ref<HTMLCanvasElement | null>(null)
 let chart: Chart | null = null
 
@@ -41,6 +44,7 @@ function readColors() {
   const read = (name: string) => styles.getPropertyValue(name).trim()
   return {
     ink: read('--ink'),
+    surface: read('--surface'),
     muted: read('--muted'),
     grid: read('--line-soft'),
     bar: read('--rain-bar'),
@@ -62,7 +66,7 @@ function buildConfig(): ChartConfiguration {
       pointHoverRadius: 4,
       pointBackgroundColor: colors.ink,
       fill: false,
-      tension: 0.3,
+      cubicInterpolationMode: 'monotone',
       order: 1,
     },
   ]
@@ -76,7 +80,14 @@ function buildConfig(): ChartConfiguration {
       position: 'left',
       grid: { color: colors.grid },
       border: { display: false },
-      ticks: { color: colors.muted, font, maxTicksLimit: 5 },
+      grace: 1,
+      ticks: {
+        color: colors.muted,
+        font,
+        maxTicksLimit: 5,
+        precision: 0,
+        callback: (value) => `${formatNumber(Number(value), 0)}°`,
+      },
     },
   }
   if (hasPrecipitation.value) {
@@ -94,7 +105,12 @@ function buildConfig(): ChartConfiguration {
       suggestedMax: 3,
       grid: { display: false },
       border: { display: false },
-      ticks: { color: colors.muted, font, maxTicksLimit: 4 },
+      ticks: {
+        color: colors.muted,
+        font,
+        maxTicksLimit: 4,
+        callback: (value) => t('chart.axisPrecip', { value: formatNumber(Number(value)) }),
+      },
     }
   }
   return {
@@ -105,24 +121,54 @@ function buildConfig(): ChartConfiguration {
       maintainAspectRatio: false,
       animation: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: colors.ink,
+          titleColor: colors.surface,
+          bodyColor: colors.surface,
+          titleFont: { ...font, size: 12, weight: 'bold' },
+          bodyFont: { ...font, size: 12 },
+          padding: 8,
+          boxPadding: 4,
+          callbacks: {
+            label: (item) =>
+              item.dataset.yAxisID === 'y1'
+                ? t('chart.tooltipPrecip', { value: formatNumber(item.parsed.y ?? 0, 2) })
+                : t('chart.tooltipTemp', { value: formatTemp(item.parsed.y ?? 0) }),
+          },
+        },
+      },
       scales,
     },
   }
 }
 
 onMounted(() => {
-  if (canvas.value) chart = new Chart(canvas.value, buildConfig())
+  if (!canvas.value) return
+  const config = buildConfig()
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  if (config.options && !reducedMotion) {
+    config.options.animation = { duration: 600, easing: 'easeOutQuart' }
+  }
+  chart = new Chart(canvas.value, config)
 })
 
+function rebuild() {
+  if (!chart) return
+  const config = buildConfig()
+  chart.data = config.data
+  chart.options = config.options ?? {}
+  chart.update()
+}
+
+watch(() => [props.labels, props.temps, props.precipitation], rebuild)
+
 watch(
-  () => [props.labels, props.temps, props.precipitation],
-  () => {
-    if (!chart) return
-    const config = buildConfig()
-    chart.data = config.data
-    chart.options = config.options ?? {}
-    chart.update()
+  () => theme.resolved,
+  async () => {
+    await nextTick()
+    rebuild()
   },
 )
 

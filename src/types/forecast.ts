@@ -20,6 +20,8 @@ export interface DayPoint {
   icon: string
   pop: number
   precipitation: number
+  hours: HourPoint[]
+  summary: PrecipitationSummary | null
 }
 
 export interface CurrentView {

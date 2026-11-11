@@ -36,29 +36,51 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="modal-backdrop" data-testid="modal-backdrop" @click.self="close">
-      <div
-        ref="dialog"
-        class="modal"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="title"
-        tabindex="-1"
-        :data-testid="testId"
-      >
-        <h4 class="modal__title">{{ title }}</h4>
-        <div class="modal__body">
-          <slot />
-        </div>
-        <div v-if="$slots.actions" class="modal__actions">
-          <slot name="actions" />
+    <Transition name="modal">
+      <div v-if="open" class="modal-backdrop" data-testid="modal-backdrop" @click.self="close">
+        <div
+          ref="dialog"
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="title"
+          tabindex="-1"
+          :data-testid="testId"
+        >
+          <h4 class="modal__title">{{ title }}</h4>
+          <div class="modal__body">
+            <slot />
+          </div>
+          <div v-if="$slots.actions" class="modal__actions">
+            <slot name="actions" />
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </Teleport>
 </template>
 
 <style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-enter-active .modal,
+.modal-leave-active .modal {
+  transition: transform 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .modal,
+.modal-leave-to .modal {
+  transform: scale(0.96);
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

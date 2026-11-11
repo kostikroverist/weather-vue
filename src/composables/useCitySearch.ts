@@ -1,5 +1,6 @@
 import { onScopeDispose, ref, watch } from 'vue'
 import axios from 'axios'
+import { locale } from '@/i18n'
 import { searchCities } from '@/services/geo.service'
 import type { City } from '@/types/city'
 
@@ -47,7 +48,15 @@ export function useCitySearch() {
       error.value = false
       return
     }
+    loading.value = true
     timer = setTimeout(() => search(q), DEBOUNCE_MS)
+  })
+
+  watch(locale, () => {
+    const q = query.value.trim()
+    if (q.length < MIN_LENGTH) return
+    clearTimeout(timer)
+    void search(q)
   })
 
   function clear(): void {

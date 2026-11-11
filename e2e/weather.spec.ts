@@ -118,17 +118,39 @@ test('6. ліміт обраного: заміна міста через мод�
   await expect(page.getByTestId('fav-button')).toHaveText('★ В обраному')
 })
 
-test('7. режим «5 днів»', async ({ page }) => {
+test('7. режим «5 днів»: вибір дня показує погоду по годинах', async ({ page }) => {
   await page.goto('/')
   await page.getByTestId('mode-days').click()
-  await expect(page.getByTestId('day-tile')).toHaveCount(5)
-  await expect(page.getByTestId('strip-cell')).toHaveCount(5)
+  const tiles = page.getByTestId('day-tile')
+  await expect(tiles).toHaveCount(5)
+  await expect(tiles.first()).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('strip-cell')).toHaveCount(8)
+
+  await tiles.nth(1).click()
+  await expect(tiles.nth(1)).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('day-hourly-title')).toContainText('По годинах')
+  await expect(page.getByTestId('strip-cell')).toHaveCount(8)
+  await expect(page.getByTestId('precip-summary')).toBeVisible()
 })
 
-test('8. mobile: немає горизонтального скролу на головній і в модалці', async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'тільки для профілю mobile')
+test('9. блоки головної зберігаються після перезавантаження', async ({ page }) => {
+  await page.goto('/')
+  const input = page.getByTestId('city-input')
+  await expect(input).toHaveValue('Київ, UA')
+  await input.click()
+  await input.fill('Льв')
+  await expect(page.getByTestId('city-option').first()).toBeVisible()
+  await input.press('ArrowDown')
+  await input.press('Enter')
+  await page.getByTestId('add-block').click()
+  await expect(page.getByTestId('weather-block')).toHaveCount(2)
+
+  await page.reload()
+  await expect(page.getByTestId('weather-block')).toHaveCount(2)
+  await expect(page.getByTestId('city-input').first()).toHaveValue(/^Львів/)
+})
+
+test('8. немає горизонтального скролу на головній і в модалці @mobile', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('temp-chart')).toBeVisible()
   const scrollWidth = () => page.evaluate<number>('document.documentElement.scrollWidth')

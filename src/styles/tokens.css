@@ -10,9 +10,27 @@
   --rain: #2f5f96;
   --rain-bar: rgba(63, 111, 168, 0.35);
   --backdrop: rgba(20, 24, 30, 0.45);
+  --strip-ink: #1d2127;
+  --strip-muted: #4f5660;
+  --strip-rain: #2f5f96;
   --radius-block: 12px;
   --radius-control: 8px;
   --radius-modal: 16px;
   --radius-pill: 999px;
   --font: 'Onest', system-ui, sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --bg: #17191d;
+  --surface: #202429;
+  --ink: #e6e8eb;
+  --muted: #9aa2ad;
+  --line: #333a42;
+  --line-soft: #2a3037;
+  --fav-bg: #4a3d14;
+  --fav-ink: #f2d98a;
+  --rain: #86b4e8;
+  --rain-bar: rgba(134, 180, 232, 0.4);
+  --backdrop: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
 }

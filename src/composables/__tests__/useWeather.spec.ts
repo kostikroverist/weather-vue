@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { effectScope, ref, type EffectScope } from 'vue'
+import { effectScope, nextTick, ref, type EffectScope } from 'vue'
 import { flushPromises } from '@vue/test-utils'
+import { locale } from '@/i18n'
 import { getCurrent, getForecast } from '@/services/weather.service'
 import { useWeather } from '@/composables/useWeather'
 import { KYIV } from '@/utils/city'
@@ -48,7 +49,11 @@ describe('useWeather', () => {
     vi.mocked(getForecast).mockReset().mockResolvedValue(forecast(5))
   })
 
-  afterEach(() => scope.stop())
+  afterEach(async () => {
+    scope.stop()
+    locale.value = 'uk'
+    await nextTick()
+  })
 
   it('з містом заповнює current, hours, days', async () => {
     const { weather } = setup(KYIV)
@@ -99,5 +104,23 @@ describe('useWeather', () => {
     await flushPromises()
     expect(weather.hours.value[0]?.temp).toBe(5)
     expect(getForecast).toHaveBeenLastCalledWith(LVIV)
+  })
+
+  it('перезапитує дані при зміні мови, не скидаючи показані', async () => {
+    const { weather } = setup(KYIV)
+    await flushPromises()
+    expect(getCurrent).toHaveBeenCalledTimes(1)
+    vi.mocked(getCurrent).mockResolvedValueOnce(
+      current({ weather: [{ id: 800, main: 'Clear', description: 'clear sky', icon: '01d' }] }),
+    )
+    locale.value = 'en'
+    await nextTick()
+    expect(weather.loading.value).toBe(true)
+    expect(weather.current.value?.description).toBe('ясно')
+    await flushPromises()
+    expect(getCurrent).toHaveBeenCalledTimes(2)
+    expect(getForecast).toHaveBeenCalledTimes(2)
+    expect(weather.current.value?.description).toBe('clear sky')
+    expect(weather.loading.value).toBe(false)
   })
 })

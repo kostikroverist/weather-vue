@@ -8,6 +8,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700&display=swap" rel="stylesheet">
     <title>Погодник</title>
+    <style>
+      html {
+        background: #f4f5f6;
+      }
+
+      html[data-theme='dark'] {
+        background: #17191d;
+        color-scheme: dark;
+      }
+    </style>
+    <script>
+      (function () {
+        var root = document.documentElement
+        try {
+          var mode = JSON.parse(localStorage.getItem('weather:theme') || '"auto"')
+          var daylight = JSON.parse(localStorage.getItem('weather:daylight') || 'true')
+          var dark = mode === 'dark' || (mode === 'auto' && daylight === false)
+          root.dataset.theme = dark ? 'dark' : 'light'
+        } catch (error) {
+          root.dataset.theme = 'light'
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

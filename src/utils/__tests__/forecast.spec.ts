@@ -36,6 +36,36 @@ describe('forecast', () => {
     })
   })
 
+  it('toDayPoints віддає погодинні точки дня і підсумок його опадів', () => {
+    const list = [
+      item(T0, 2),
+      item(T0 + 10800, 4, { rain: { '3h': 0.6 } }),
+      item(T0 + 21600, 5, { rain: { '3h': 1.4 } }),
+      item(T0 + 86400, 3),
+    ]
+    const [first, second] = toDayPoints(list, 0)
+    expect(first?.hours.map((h) => h.time)).toEqual(['00:00', '03:00', '06:00'])
+    expect(first?.summary).toEqual({
+      kind: 'rain',
+      ranges: [{ from: '03:00', to: '09:00' }],
+      peak: { time: '06:00', mm: 1.4 },
+    })
+    expect(second?.hours).toHaveLength(1)
+    expect(second?.summary).toBeNull()
+  })
+
+  it('toDayPoints пропускає сьогоднішній день і бере 5 наступних', () => {
+    const list = Array.from({ length: 40 }, (_, i) => item(T0 + 61200 + i * 10800, 1))
+    const days = toDayPoints(list, 0, '2026-11-12')
+    expect(days.map((d) => d.dateKey)).toEqual([
+      '2026-11-13',
+      '2026-11-14',
+      '2026-11-15',
+      '2026-11-16',
+      '2026-11-17',
+    ])
+  })
+
   it('toDayPoints використовує часовий пояс міста (Токіо)', () => {
     const list = [item(T0 - 3600, 1), item(T0 + 3600, 3)]
     expect(toDayPoints(list, 32400).map((d) => d.dateKey)).toEqual(['2026-11-12'])

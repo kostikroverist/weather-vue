@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, type EffectScope } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { CanceledError } from 'axios'
+import { locale } from '@/i18n'
 import { searchCities } from '@/services/geo.service'
 import { useCitySearch } from '@/composables/useCitySearch'
 import { KYIV } from '@/utils/city'
@@ -45,6 +46,7 @@ describe('useCitySearch', () => {
 
   afterEach(() => {
     scope.stop()
+    locale.value = 'uk'
     vi.useRealTimers()
   })
 
@@ -66,6 +68,14 @@ describe('useCitySearch', () => {
     expect(mocked.mock.calls[0]?.[0]).toBe('Киї')
     expect(search.results.value).toEqual([KYIV])
     expect(search.loading.value).toBe(false)
+  })
+
+  it('показує loading уже під час очікування debounce', async () => {
+    const search = setup()
+    search.query.value = 'Ки'
+    await vi.advanceTimersByTimeAsync(100)
+    expect(search.loading.value).toBe(true)
+    expect(mocked).not.toHaveBeenCalled()
   })
 
   it('другий пошук скасовує перший', async () => {
@@ -125,5 +135,27 @@ describe('useCitySearch', () => {
     expect(search.query.value).toBe('')
     expect(search.results.value).toEqual([])
     expect(mocked).toHaveBeenCalledTimes(1)
+  })
+
+  it('повторює активний пошук при зміні мови', async () => {
+    const search = setup()
+    search.query.value = 'Ки'
+    await vi.advanceTimersByTimeAsync(300)
+    expect(mocked).toHaveBeenCalledTimes(1)
+    mocked.mockResolvedValueOnce([LVIV])
+    locale.value = 'en'
+    await vi.advanceTimersByTimeAsync(0)
+    expect(mocked).toHaveBeenCalledTimes(2)
+    expect(mocked.mock.calls[1]?.[0]).toBe('Ки')
+    expect(search.results.value).toEqual([LVIV])
+  })
+
+  it('без активного запиту зміна мови нічого не шукає', async () => {
+    const search = setup()
+    search.query.value = 'К'
+    await vi.advanceTimersByTimeAsync(300)
+    locale.value = 'en'
+    await vi.advanceTimersByTimeAsync(300)
+    expect(mocked).not.toHaveBeenCalled()
   })
 })

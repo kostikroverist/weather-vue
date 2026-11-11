@@ -1,7 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import { KYIV, cityLabel, isCity, toCity } from '@/utils/city'
+import { afterEach, describe, expect, it } from 'vitest'
+import { locale } from '@/i18n'
+import { KYIV, cityLabel, cityName, cityOptionLabel, isCity, toCity } from '@/utils/city'
 
 describe('city', () => {
+  afterEach(() => {
+    locale.value = 'uk'
+  })
+
   it('toCity бере local_names і формує id з координат', () => {
     expect(
       toCity({
@@ -33,10 +38,26 @@ describe('city', () => {
     expect(toCity({ name: 'A', lat: 50.4549, lon: 30.5151, country: 'UA' }).id).toBe('50.45,30.52')
   })
 
-  it('cityLabel показує область, тільки якщо вона відрізняється від назви', () => {
+  it('cityLabel показує тільки назву і країну', () => {
     expect(cityLabel(KYIV)).toBe('Київ, UA')
-    expect(cityLabel({ ...KYIV, state: 'Київська область' })).toBe('Київ, Київська область, UA')
-    expect(cityLabel({ ...KYIV, state: 'Київ' })).toBe('Київ, UA')
+    expect(cityLabel({ ...KYIV, state: 'Kyiv Oblast' })).toBe('Київ, UA')
+  })
+
+  it('cityOptionLabel показує область, тільки якщо вона відрізняється від назви', () => {
+    expect(cityOptionLabel(KYIV)).toBe('Київ, UA')
+    expect(cityOptionLabel({ ...KYIV, state: 'Київська область' })).toBe(
+      'Київ, Київська область, UA',
+    )
+    expect(cityOptionLabel({ ...KYIV, state: 'Київ' })).toBe('Київ, UA')
+  })
+
+  it('cityName і cityLabel беруть назву поточної мови', () => {
+    expect(cityName(KYIV)).toBe('Київ')
+    locale.value = 'en'
+    expect(cityName(KYIV)).toBe('Kyiv')
+    expect(cityLabel(KYIV)).toBe('Kyiv, UA')
+    expect(cityLabel({ ...KYIV, state: 'Kyiv' })).toBe('Kyiv, UA')
+    expect(cityOptionLabel({ ...KYIV, state: 'Kyiv Oblast' })).toBe('Kyiv, Kyiv Oblast, UA')
   })
 
   it('isCity відкидає неповні обʼєкти', () => {
