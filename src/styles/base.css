@@ -1,0 +1,15 @@
+body {
+  min-width: 360px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  min-width: 360px;
+  margin: 0 auto;
+  padding: 0 16px;
+}

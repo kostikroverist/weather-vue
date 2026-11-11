@@ -1,0 +1,18 @@
+:root {
+  --bg: #f4f5f6;
+  --surface: #ffffff;
+  --ink: #1d2127;
+  --muted: #6a717b;
+  --line: #e3e6ea;
+  --line-soft: #eef0f2;
+  --fav-bg: #fff1bf;
+  --fav-ink: #6b4e00;
+  --rain: #2f5f96;
+  --rain-bar: rgba(63, 111, 168, 0.35);
+  --backdrop: rgba(20, 24, 30, 0.45);
+  --radius-block: 12px;
+  --radius-control: 8px;
+  --radius-modal: 16px;
+  --radius-pill: 999px;
+  --font: 'Onest', system-ui, sans-serif;
+}
