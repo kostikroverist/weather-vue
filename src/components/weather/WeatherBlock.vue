@@ -1,21 +1,22 @@
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue'
-import { monthName, t, weekdayName } from '@/i18n'
+import { computed, toRef, useTemplateRef, watch } from 'vue'
+import { t } from '@/i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseSegmented from '@/components/ui/BaseSegmented.vue'
 import CitySearch from '@/components/weather/CitySearch.vue'
 import CurrentCard from '@/components/weather/CurrentCard.vue'
-import DaysList from '@/components/weather/DaysList.vue'
 import FavoriteButton from '@/components/weather/FavoriteButton.vue'
 import PrecipitationSummary from '@/components/weather/PrecipitationSummary.vue'
+import RefreshBar from '@/components/weather/RefreshBar.vue'
 import TempChart from '@/components/weather/TempChart.vue'
 import TempStrip from '@/components/weather/TempStrip.vue'
 import WeatherBlockSkeleton from '@/components/weather/WeatherBlockSkeleton.vue'
+import WeatherDays from '@/components/weather/WeatherDays.vue'
+import { useForecastView } from '@/composables/useForecastView'
 import { useWeather } from '@/composables/useWeather'
 import { useFavoritesStore } from '@/stores/favorites'
 import { useThemeStore } from '@/stores/theme'
 import type { City } from '@/types/city'
-import type { HourPoint } from '@/types/forecast'
 import { cityName } from '@/utils/city'
 
 const props = defineProps<{
@@ -32,21 +33,23 @@ const emit = defineEmits<{
 }>()
 
 const favorites = useFavoritesStore()
-const { current, hours, days, precipitation, loading, error, reload } = useWeather(
-  toRef(props, 'city'),
-)
+const { current, hours, days, todayKey, precipitation, loading, error, updatedAt, reload } =
+  useWeather(toRef(props, 'city'))
+const search = useTemplateRef('search')
+
+defineExpose({ focusSearch: () => search.value?.focus() })
 
 const theme = useThemeStore()
 
 watch(
   [current, () => props.primary],
   ([value, primary]) => {
-    if (primary && value) theme.setDaylight(value.sunEvent.kind === 'sunset')
+    if (primary && value) theme.setDaylight(value.isDay)
   },
   { immediate: true },
 )
 
-const mode = ref<'day' | 'days'>('day')
+const { mode, selectedKey, series } = useForecastView(hours, days, () => props.city?.id)
 
 const modeOptions = computed(() => [
   { value: 'day', label: t('mode.day'), testId: 'mode-day' },
@@ -61,40 +64,6 @@ const searchCity = computed({
     if (value) emit('update:city', value)
   },
 })
-
-const selectedKey = ref('')
-
-const selectedDay = computed(
-  () => days.value.find((d) => d.dateKey === selectedKey.value) ?? days.value[0] ?? null,
-)
-
-const selectedDateKey = computed({
-  get: () => selectedDay.value?.dateKey ?? '',
-  set: (value: string) => {
-    selectedKey.value = value
-  },
-})
-
-const selectedTitle = computed(() => {
-  const day = selectedDay.value
-  if (!day) return ''
-  const date = `${weekdayName(day.weekday)}, ${day.day} ${monthName(day.month)}`
-  return t('days.hourly', { date })
-})
-
-const shownHours = computed<HourPoint[]>(() =>
-  mode.value === 'days' ? (selectedDay.value?.hours ?? []) : hours.value,
-)
-
-const chart = computed(() => ({
-  labels: shownHours.value.map((h) => h.time),
-  temps: shownHours.value.map((h) => h.temp),
-  precipitation: shownHours.value.map((h) => h.rain + h.snow),
-}))
-
-const cells = computed(() =>
-  shownHours.value.map((h) => ({ label: h.time, temp: h.temp, icon: h.icon, pop: h.pop })),
-)
 </script>
 
 <template>
@@ -106,7 +75,7 @@ const cells = computed(() =>
   >
     <div class="block__top">
       <h2 v-if="readonly && city" class="block__title">{{ cityName(city) }}</h2>
-      <CitySearch v-else v-model:city="searchCity" />
+      <CitySearch v-else ref="search" v-model:city="searchCity" />
       <FavoriteButton v-if="city" :city="city" :readonly="readonly" />
       <BaseButton
         v-if="removable && !readonly"
@@ -127,20 +96,29 @@ const cells = computed(() =>
     </div>
     <WeatherBlockSkeleton v-else-if="loading && !current" />
     <template v-else-if="current">
-      <BaseSegmented v-model="mode" class="block__mode" :options="modeOptions" />
-      <template v-if="mode === 'days'">
-        <DaysList v-model:selected="selectedDateKey" :days="days" />
-        <h3 v-if="selectedDay" class="block__subtitle" data-testid="day-hourly-title">
-          {{ selectedTitle }}
-        </h3>
-        <PrecipitationSummary :summary="selectedDay?.summary ?? null" empty-key="precip.noneDay" />
-      </template>
+      <BaseSegmented
+        v-model="mode"
+        class="block__mode"
+        :options="modeOptions"
+        :aria-label="t('mode.aria')"
+      />
+      <RefreshBar :updated-at="updatedAt" :loading="loading" @refresh="reload" />
+      <WeatherDays
+        v-if="mode === 'days'"
+        v-model:selected="selectedKey"
+        :days="days"
+        :today-key="todayKey"
+      />
       <template v-else>
         <CurrentCard :current="current" :city-name="readonly ? undefined : cityName(city)" />
         <PrecipitationSummary :summary="precipitation" />
       </template>
-      <TempChart :labels="chart.labels" :temps="chart.temps" :precipitation="chart.precipitation" />
-      <TempStrip :cells="cells" />
+      <TempChart
+        :labels="series.labels"
+        :temps="series.temps"
+        :precipitation="series.precipitation"
+      />
+      <TempStrip :cells="series.cells" />
     </template>
   </section>
 </template>
@@ -169,12 +147,6 @@ const cells = computed(() =>
   min-width: 0;
   font-size: 18px;
   font-weight: 700;
-}
-
-.block__subtitle {
-  margin-top: 4px;
-  font-size: 14px;
-  font-weight: 500;
 }
 
 .block__remove {

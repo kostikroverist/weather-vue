@@ -32,7 +32,22 @@ export interface CurrentView {
   humidity: number
   windSpeed: number
   pressure: number
-  sunEvent: { kind: 'sunrise' | 'sunset'; time: string }
+  sunEvent: { kind: 'sunrise' | 'sunset'; time: string } | null
+  isDay: boolean
+}
+
+export interface StripCell {
+  label: string
+  temp: number
+  icon: string
+  pop: number
+}
+
+export interface ForecastSeries {
+  labels: string[]
+  temps: number[]
+  precipitation: number[]
+  cells: StripCell[]
 }
 
 export type PrecipitationKind = 'rain' | 'snow' | 'mixed'

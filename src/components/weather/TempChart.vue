@@ -62,7 +62,7 @@ function buildConfig(): ChartConfiguration {
       yAxisID: 'y',
       borderColor: colors.ink,
       borderWidth: 2,
-      pointRadius: 0,
+      pointRadius: props.temps.length === 1 ? 3 : 0,
       pointHoverRadius: 4,
       pointBackgroundColor: colors.ink,
       fill: false,
@@ -226,7 +226,6 @@ onUnmounted(() => {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 2px;
   background: var(--rain-bar);
 }
 </style>

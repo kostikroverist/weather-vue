@@ -23,7 +23,9 @@
         var root = document.documentElement
         try {
           var mode = JSON.parse(localStorage.getItem('weather:theme') || '"auto"')
-          var daylight = JSON.parse(localStorage.getItem('weather:daylight') || 'true')
+          var storedDaylight = localStorage.getItem('weather:daylight')
+          var systemDark = !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          var daylight = storedDaylight === null ? !systemDark : JSON.parse(storedDaylight)
           var dark = mode === 'dark' || (mode === 'auto' && daylight === false)
           root.dataset.theme = dark ? 'dark' : 'light'
         } catch (error) {

@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { locale } from '@/i18n'
-import { KYIV, cityLabel, cityName, cityOptionLabel, isCity, toCity } from '@/utils/city'
+import {
+  KYIV,
+  cityLabel,
+  cityName,
+  cityOptionLabel,
+  isCity,
+  matchesQuery,
+  toCity,
+} from '@/utils/city'
 
 describe('city', () => {
   afterEach(() => {
@@ -63,5 +71,15 @@ describe('city', () => {
   it('isCity відкидає неповні обʼєкти', () => {
     expect(isCity({ id: 'x' })).toBe(false)
     expect(isCity(KYIV)).toBe(true)
+  })
+
+  it('matchesQuery перевіряє початок назви будь-якою мовою без регістру', () => {
+    const lviv = { ...KYIV, names: { uk: 'Львів', en: 'Lviv' } }
+    const taikkyi = { ...KYIV, names: { uk: 'Taikkyi', en: 'Taikkyi' } }
+    expect(matchesQuery(lviv, 'Льв')).toBe(true)
+    expect(matchesQuery(lviv, 'львів')).toBe(true)
+    expect(matchesQuery(KYIV, 'Kyi')).toBe(true)
+    expect(matchesQuery(KYIV, '  kyi ')).toBe(true)
+    expect(matchesQuery(taikkyi, 'Kyi')).toBe(false)
   })
 })

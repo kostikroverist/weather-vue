@@ -11,6 +11,7 @@ export const uk = {
   'search.error': 'Не вдалося завантажити список міст',
   'mode.day': 'День',
   'mode.days': '5 днів',
+  'mode.aria': 'Режим відображення',
   'fav.add': '☆ В обране',
   'fav.added': '★ В обраному',
   'fav.remove': '★ Прибрати',
@@ -18,6 +19,7 @@ export const uk = {
   'fav.emptyLink': 'Перейти на головну',
   'fav.limit.title': 'В обраному вже 5 міст',
   'fav.limit.text': 'Щоб додати {city}, видаліть одне місто: максимум 5.',
+  'fav.limit.removeAria': 'Видалити {city}',
   'block.delete.title': 'Видалити блок «{city}»?',
   'block.delete.titleEmpty': 'Видалити порожній блок?',
   'block.delete.text': 'Блок зникне з головної. Якщо місто в обраному, воно там залишиться.',
@@ -35,7 +37,10 @@ export const uk = {
   'weather.sunrise': 'Схід',
   'weather.sunset': 'Захід',
   'weather.error': 'Не вдалося завантажити погоду',
+  'weather.updatedAt': 'Оновлено {time}',
+  'weather.refresh': 'Оновити',
   'days.hourly': 'По годинах: {date}',
+  'days.back': 'Назад до 5 днів',
   'days.note':
     'Середня за день, мін / макс і ймовірність опадів. Оберіть день, щоб побачити погоду по годинах',
   'weekday.0': 'Нд',
@@ -75,4 +80,6 @@ export const uk = {
   'theme.light': 'День',
   'theme.dark': 'Ніч',
   'locale.label': 'Мова',
+  'locale.uk': 'УКР',
+  'locale.en': 'EN',
 } as const

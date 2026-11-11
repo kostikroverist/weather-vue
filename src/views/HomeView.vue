@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import { t } from '@/i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import ConfirmModal from '@/components/modals/ConfirmModal.vue'
@@ -9,6 +9,8 @@ import { cityName } from '@/utils/city'
 
 const store = useBlocksStore()
 const pendingRemoveId = ref<string | null>(null)
+const addArea = useTemplateRef<HTMLElement>('addArea')
+const blockRefs = useTemplateRef<InstanceType<typeof WeatherBlock>[]>('blockRefs')
 
 const pendingBlock = computed(() => store.blocks.find((b) => b.id === pendingRemoveId.value))
 
@@ -26,8 +28,15 @@ const confirmTitle = computed(() => {
 
 const confirmText = computed(() => (pendingBlock.value?.city ? t('block.delete.text') : undefined))
 
+function addBlock(): void {
+  store.add()
+  void nextTick(() => blockRefs.value?.at(-1)?.focusSearch())
+}
+
 function confirmRemove(): void {
-  if (pendingRemoveId.value) store.remove(pendingRemoveId.value)
+  if (!pendingRemoveId.value) return
+  store.remove(pendingRemoveId.value)
+  void nextTick(() => addArea.value?.querySelector('button')?.focus())
 }
 </script>
 
@@ -37,13 +46,13 @@ function confirmRemove(): void {
       <span class="home__count" data-testid="blocks-count">
         {{ t('blocks.count', { n: store.blocks.length, max: BLOCKS_MAX }) }}
       </span>
-      <div class="home__add">
+      <div ref="addArea" class="home__add">
         <span v-if="!store.canAdd" class="home__hint">{{ t('blocks.max') }}</span>
         <BaseButton
           variant="primary"
           :disabled="!store.canAdd"
           data-testid="add-block"
-          @click="store.add()"
+          @click="addBlock"
         >
           {{ t('blocks.add') }}
         </BaseButton>
@@ -54,6 +63,7 @@ function confirmRemove(): void {
       <WeatherBlock
         v-for="(block, index) in store.blocks"
         :key="block.id"
+        ref="blockRefs"
         :city="block.city"
         :removable="store.canRemove"
         :primary="index === 0"

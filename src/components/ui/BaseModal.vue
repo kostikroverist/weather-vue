@@ -6,32 +6,79 @@ defineProps<{
   testId?: string
 }>()
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
 const open = defineModel<boolean>('open', { default: false })
 const dialog = ref<HTMLElement | null>(null)
+
+let returnFocus: HTMLElement | null = null
+let savedOverflow: string | null = null
 
 function close() {
   open.value = false
 }
 
+function trapTab(event: KeyboardEvent) {
+  const root = dialog.value
+  if (!root) return
+  const items = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE))
+  const first = items[0]
+  const last = items[items.length - 1]
+  if (!first || !last) {
+    event.preventDefault()
+    root.focus()
+    return
+  }
+  const active = document.activeElement
+  const inside = active instanceof Node && root.contains(active)
+  if (event.shiftKey && (!inside || active === first || active === root)) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && (!inside || active === last)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') close()
+  else if (event.key === 'Tab') trapTab(event)
+}
+
+function activate() {
+  returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  savedOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+  document.addEventListener('keydown', onKeydown)
+}
+
+function deactivate() {
+  document.removeEventListener('keydown', onKeydown)
+  if (savedOverflow !== null) {
+    document.body.style.overflow = savedOverflow
+    savedOverflow = null
+  }
+  if (returnFocus?.isConnected) returnFocus.focus()
+  returnFocus = null
 }
 
 watch(
   open,
   async (value) => {
     if (value) {
-      document.addEventListener('keydown', onKeydown)
+      activate()
       await nextTick()
+      if (!open.value) return
       dialog.value?.focus()
     } else {
-      document.removeEventListener('keydown', onKeydown)
+      deactivate()
     }
   },
   { immediate: true },
 )
 
-onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
+onBeforeUnmount(deactivate)
 </script>
 
 <template>

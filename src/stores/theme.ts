@@ -11,9 +11,12 @@ const isThemeMode = (v: unknown): v is ThemeMode => v === 'auto' || v === 'light
 
 const isBoolean = (v: unknown): v is boolean => typeof v === 'boolean'
 
+const systemDaylight = (): boolean =>
+  typeof matchMedia === 'function' ? !matchMedia('(prefers-color-scheme: dark)').matches : true
+
 export const useThemeStore = defineStore('theme', () => {
   const mode = ref<ThemeMode>(readJson(STORAGE_KEY, isThemeMode, 'auto'))
-  const daylight = ref(readJson(DAYLIGHT_KEY, isBoolean, true))
+  const daylight = ref(readJson(DAYLIGHT_KEY, isBoolean, systemDaylight()))
 
   const resolved = computed<'light' | 'dark'>(() => {
     if (mode.value === 'auto') return daylight.value ? 'light' : 'dark'

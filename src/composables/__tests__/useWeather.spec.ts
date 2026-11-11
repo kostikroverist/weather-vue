@@ -62,9 +62,19 @@ describe('useWeather', () => {
     expect(weather.current.value?.icon).toBe('01d')
     expect(weather.hours.value).toHaveLength(8)
     expect(weather.days.value).toHaveLength(5)
+    expect(weather.days.value[0]?.dateKey).toBe('2026-11-12')
+    expect(weather.todayKey.value).toBe('2026-11-12')
     expect(weather.precipitation.value).toBeNull()
     expect(weather.loading.value).toBe(false)
     expect(weather.error.value).toBe(false)
+  })
+
+  it('todayKey береться з current.dt у часі міста, навіть якщо прогноз уже з завтра', async () => {
+    vi.mocked(getCurrent).mockResolvedValue(current({ dt: T0 - 86400 }))
+    const { weather } = setup(KYIV)
+    await flushPromises()
+    expect(weather.todayKey.value).toBe('2026-11-11')
+    expect(weather.days.value.map((d) => d.dateKey)).not.toContain('2026-11-11')
   })
 
   it('з city = null не робить запитів', async () => {
@@ -106,6 +116,29 @@ describe('useWeather', () => {
     expect(getForecast).toHaveBeenLastCalledWith(LVIV)
   })
 
+  it('при зміні міста скидає дані попереднього, поки вантажиться нове', async () => {
+    const { cityRef, weather } = setup(KYIV)
+    await flushPromises()
+    expect(weather.current.value).not.toBeNull()
+    const currentB = deferred<CurrentWeatherResponse>()
+    const forecastB = deferred<ForecastResponse>()
+    vi.mocked(getCurrent).mockReturnValueOnce(currentB.promise)
+    vi.mocked(getForecast).mockReturnValueOnce(forecastB.promise)
+    cityRef.value = LVIV
+    await nextTick()
+    expect(weather.current.value).toBeNull()
+    expect(weather.todayKey.value).toBe('')
+    expect(weather.hours.value).toEqual([])
+    expect(weather.days.value).toEqual([])
+    expect(weather.loading.value).toBe(true)
+    currentB.resolve(current())
+    forecastB.resolve(forecast(-3))
+    await flushPromises()
+    expect(weather.current.value).not.toBeNull()
+    expect(weather.hours.value[0]?.temp).toBe(-3)
+    expect(weather.loading.value).toBe(false)
+  })
+
   it('перезапитує дані при зміні мови, не скидаючи показані', async () => {
     const { weather } = setup(KYIV)
     await flushPromises()
@@ -122,5 +155,115 @@ describe('useWeather', () => {
     expect(getForecast).toHaveBeenCalledTimes(2)
     expect(weather.current.value?.description).toBe('clear sky')
     expect(weather.loading.value).toBe(false)
+  })
+
+  it('новий обʼєкт міста з тим самим id не робить повторних запитів', async () => {
+    const { cityRef } = setup(KYIV)
+    await flushPromises()
+    expect(getCurrent).toHaveBeenCalledTimes(1)
+    cityRef.value = { ...KYIV, names: { ...KYIV.names } }
+    await flushPromises()
+    expect(getCurrent).toHaveBeenCalledTimes(1)
+    expect(getForecast).toHaveBeenCalledTimes(1)
+  })
+
+  describe('оновлення', () => {
+    const REFRESH_MS = 10 * 60 * 1000
+
+    function setVisibility(state: 'visible' | 'hidden'): void {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: state })
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-11-12T10:00:00Z'))
+      setVisibility('visible')
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('updatedAt виставляється після успішного завантаження', async () => {
+      const { weather } = setup(KYIV)
+      expect(weather.updatedAt.value).toBeNull()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(weather.updatedAt.value).toBe(Date.now())
+    })
+
+    it('updatedAt скидається в null при зміні міста', async () => {
+      const { cityRef, weather } = setup(KYIV)
+      await vi.advanceTimersByTimeAsync(0)
+      vi.mocked(getCurrent).mockReturnValueOnce(deferred<CurrentWeatherResponse>().promise)
+      cityRef.value = LVIV
+      await nextTick()
+      expect(weather.updatedAt.value).toBeNull()
+    })
+
+    it('через 10 хвилин повторно запитує дані без скидання current', async () => {
+      const { weather } = setup(KYIV)
+      await vi.advanceTimersByTimeAsync(0)
+      const first = weather.updatedAt.value
+      const pending = deferred<CurrentWeatherResponse>()
+      vi.mocked(getCurrent).mockReturnValueOnce(pending.promise)
+      await vi.advanceTimersByTimeAsync(REFRESH_MS)
+      expect(getCurrent).toHaveBeenCalledTimes(2)
+      expect(weather.current.value).not.toBeNull()
+      pending.resolve(current())
+      await vi.advanceTimersByTimeAsync(0)
+      expect(weather.updatedAt.value).toBeGreaterThan(first!)
+    })
+
+    it('падіння повторного запиту лишає дані, error і updatedAt', async () => {
+      const { weather } = setup(KYIV)
+      await vi.advanceTimersByTimeAsync(0)
+      const first = weather.updatedAt.value
+      vi.mocked(getForecast).mockRejectedValueOnce(new Error('500'))
+      await vi.advanceTimersByTimeAsync(REFRESH_MS)
+      expect(getForecast).toHaveBeenCalledTimes(2)
+      expect(weather.current.value).not.toBeNull()
+      expect(weather.error.value).toBe(false)
+      expect(weather.updatedAt.value).toBe(first)
+    })
+
+    it('visibilitychange зі старими даними робить запит', async () => {
+      setup(KYIV)
+      await vi.advanceTimersByTimeAsync(0)
+      vi.setSystemTime(Date.now() + REFRESH_MS + 1000)
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(getCurrent).toHaveBeenCalledTimes(2)
+    })
+
+    it('visibilitychange зі свіжими даними або прихованою вкладкою не робить запиту', async () => {
+      setup(KYIV)
+      await vi.advanceTimersByTimeAsync(0)
+      vi.setSystemTime(Date.now() + REFRESH_MS / 2)
+      document.dispatchEvent(new Event('visibilitychange'))
+      vi.setSystemTime(Date.now() + REFRESH_MS)
+      setVisibility('hidden')
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(getCurrent).toHaveBeenCalledTimes(1)
+    })
+
+    it('після scope.stop() таймер і слухач не працюють', async () => {
+      setup(KYIV)
+      await vi.advanceTimersByTimeAsync(0)
+      scope.stop()
+      vi.setSystemTime(Date.now() + REFRESH_MS + 1000)
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(REFRESH_MS * 2)
+      expect(getCurrent).toHaveBeenCalledTimes(1)
+    })
+
+    it('без міста не запитує за таймером і visibilitychange', async () => {
+      setup(null)
+      expect(vi.getTimerCount()).toBe(0)
+      await vi.advanceTimersByTimeAsync(REFRESH_MS * 2)
+      document.dispatchEvent(new Event('visibilitychange'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(getCurrent).not.toHaveBeenCalled()
+    })
   })
 })

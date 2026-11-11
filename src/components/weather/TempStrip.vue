@@ -1,12 +1,23 @@
 <script setup lang="ts">
-import { formatTemp, temperatureColor } from '@/utils/temperature'
+import type { StripCell } from '@/types/forecast'
+import { formatTemp, temperatureColor, temperatureInk } from '@/utils/temperature'
 
 defineProps<{
-  cells: { label: string; temp: number; icon?: string; pop?: number }[]
+  cells: StripCell[]
 }>()
 
 function iconUrl(icon: string): string {
   return `https://openweathermap.org/img/wn/${icon}@2x.png`
+}
+
+function cellStyle(temp: number): Record<string, string> {
+  const { ink, muted, rain } = temperatureInk(temp)
+  return {
+    background: temperatureColor(temp),
+    '--cell-ink': ink,
+    '--cell-muted': muted,
+    '--cell-rain': rain,
+  }
 }
 </script>
 
@@ -16,7 +27,7 @@ function iconUrl(icon: string): string {
       v-for="(cell, index) in cells"
       :key="`${index}-${cell.label}`"
       class="strip__cell"
-      :style="{ background: temperatureColor(cell.temp) }"
+      :style="cellStyle(cell.temp)"
       data-testid="strip-cell"
     >
       <span>{{ cell.label }}</span>
@@ -51,7 +62,7 @@ function iconUrl(icon: string): string {
   gap: 3px;
   min-width: 0;
   padding: 5px 2px;
-  color: var(--strip-ink);
+  color: var(--cell-ink);
   font-size: 10px;
 }
 
@@ -69,13 +80,13 @@ function iconUrl(icon: string): string {
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  color: var(--strip-rain);
+  color: var(--cell-rain);
   font-size: 9px;
   font-weight: 500;
 }
 
 .strip__pop--none {
-  color: var(--strip-muted);
+  color: var(--cell-muted);
   font-weight: 400;
 }
 

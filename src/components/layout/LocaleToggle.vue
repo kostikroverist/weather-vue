@@ -3,11 +3,13 @@ import { computed } from 'vue'
 import { LOCALES, isLocale, locale, t } from '@/i18n'
 import BaseSegmented from '@/components/ui/BaseSegmented.vue'
 
-const options = LOCALES.map((value) => ({
-  value,
-  label: value.toUpperCase(),
-  testId: `locale-${value}`,
-}))
+const options = computed(() =>
+  LOCALES.map((value) => ({
+    value,
+    label: t(`locale.${value}`),
+    testId: `locale-${value}`,
+  })),
+)
 
 const model = computed({
   get: () => locale.value,

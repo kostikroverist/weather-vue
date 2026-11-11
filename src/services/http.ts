@@ -1,7 +1,10 @@
 import axios from 'axios'
 import { apiLang } from '@/i18n'
 
-export const http = axios.create({ baseURL: 'https://api.openweathermap.org' })
+export const http = axios.create({
+  baseURL: 'https://api.openweathermap.org',
+  timeout: 10000,
+})
 
 http.interceptors.request.use((config) => {
   config.params = {

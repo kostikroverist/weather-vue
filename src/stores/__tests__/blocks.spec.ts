@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { nextTick } from 'vue'
 import { BLOCKS_MAX, useBlocksStore } from '@/stores/blocks'
@@ -16,6 +16,14 @@ const LVIV: City = {
   country: 'UA',
   lat: 49.8419,
   lon: 24.0315,
+}
+
+function deferred<T>() {
+  let resolve: (value: T) => void = () => {}
+  const promise = new Promise<T>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
 }
 
 function freshStore() {
@@ -146,5 +154,120 @@ describe('blocks store', () => {
       expect(store.blocks[0]?.city).toBeNull()
       expect(store.locating).toBe(true)
     }
+  })
+
+  it('setCity першого блоку під час визначення IP прибирає locating і не перетирається', async () => {
+    const ip = deferred<City | null>()
+    vi.mocked(getCityByIp).mockReturnValue(ip.promise)
+    const store = useBlocksStore()
+    const pending = store.initFromIp()
+    store.setCity(store.blocks[0]!.id, KYIV)
+    expect(store.locating).toBe(false)
+    ip.resolve(LVIV)
+    await pending
+    expect(store.blocks[0]?.city).toEqual(KYIV)
+    expect(store.locating).toBe(false)
+  })
+
+  it('не пише в localStorage, поки визначається місто за IP', async () => {
+    const ip = deferred<City | null>()
+    vi.mocked(getCityByIp).mockReturnValue(ip.promise)
+    const store = useBlocksStore()
+    const pending = store.initFromIp()
+    store.add()
+    await nextTick()
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    ip.resolve(LVIV)
+    await pending
+    await nextTick()
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual([
+      { id: store.blocks[0]!.id, city: LVIV },
+      { id: store.blocks[1]!.id, city: null },
+    ])
+  })
+
+  it('зберігає стан після IP, навіть якщо перший блок видалили під час визначення', async () => {
+    const ip = deferred<City | null>()
+    vi.mocked(getCityByIp).mockReturnValue(ip.promise)
+    const store = useBlocksStore()
+    const pending = store.initFromIp()
+    store.add()
+    store.remove(store.blocks[0]!.id)
+    ip.resolve(LVIV)
+    await pending
+    await nextTick()
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')).toEqual([
+      { id: store.blocks[0]!.id, city: null },
+    ])
+  })
+
+  it('блоки з однаковими id вважаються пошкодженими', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([
+        { id: 'a', city: LVIV },
+        { id: 'a', city: null },
+      ]),
+    )
+    const store = freshStore()
+    expect(store.blocks).toHaveLength(1)
+    expect(store.blocks[0]?.city).toBeNull()
+    expect(store.locating).toBe(true)
+  })
+
+  it('add створює унікальні id без crypto.randomUUID', () => {
+    vi.stubGlobal('crypto', {})
+    try {
+      const store = useBlocksStore()
+      store.add()
+      store.add()
+      const ids = store.blocks.map((b) => b.id)
+      expect(new Set(ids).size).toBe(3)
+      for (const id of ids) expect(id).toMatch(/^[a-z0-9]+-[a-z0-9]+$/)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  describe('синхронізація між вкладками', () => {
+    afterEach(() => {
+      localStorage.clear()
+    })
+
+    it('перечитує блоки з події storage свого ключа', () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([{ id: 'a', city: null }]))
+      const store = freshStore()
+      const next = JSON.stringify([
+        { id: 'a', city: LVIV },
+        { id: 'b', city: null },
+      ])
+      localStorage.setItem(STORAGE_KEY, next)
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: next }))
+      expect(store.blocks.map((b) => b.id)).toEqual(['a', 'b'])
+      expect(store.blocks[0]?.city).toEqual(LVIV)
+    })
+
+    it('ігнорує чужі ключі та пошкоджені дані', () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([{ id: 'a', city: LVIV }]))
+      const store = freshStore()
+      window.dispatchEvent(new StorageEvent('storage', { key: 'other', newValue: '[]' }))
+      localStorage.setItem(STORAGE_KEY, '{broken')
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: '{broken' }))
+      expect(store.blocks).toEqual([{ id: 'a', city: LVIV }])
+    })
+
+    it('блоки з іншої вкладки під час визначення IP не перетираються містом за IP', async () => {
+      const ip = deferred<City | null>()
+      vi.mocked(getCityByIp).mockReturnValue(ip.promise)
+      const store = useBlocksStore()
+      const pending = store.initFromIp()
+      const next = JSON.stringify([{ id: 'x', city: null }])
+      localStorage.setItem(STORAGE_KEY, next)
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY, newValue: next }))
+      expect(store.locating).toBe(false)
+      ip.resolve(LVIV)
+      await pending
+      expect(store.blocks).toEqual([{ id: 'x', city: null }])
+    })
   })
 })

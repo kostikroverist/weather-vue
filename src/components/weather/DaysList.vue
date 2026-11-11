@@ -5,6 +5,7 @@ import { formatTemp } from '@/utils/temperature'
 
 defineProps<{
   days: DayPoint[]
+  todayKey: string
 }>()
 
 const selected = defineModel<string>('selected', { default: '' })
@@ -18,10 +19,14 @@ const selected = defineModel<string>('selected', { default: '' })
         :key="item.dateKey"
         type="button"
         class="day"
-        :class="{ 'day--selected': item.dateKey === selected }"
+        :class="{
+          'day--today': item.dateKey === todayKey,
+          'day--selected': item.dateKey === selected,
+        }"
         :aria-pressed="item.dateKey === selected"
+        :aria-current="item.dateKey === todayKey ? 'date' : undefined"
         data-testid="day-tile"
-        @click="selected = item.dateKey"
+        @click="selected = item.dateKey === selected ? '' : item.dateKey"
       >
         <span class="day__name">{{ weekdayName(item.weekday) }}</span>
         <small class="day__muted">{{ item.day }} {{ monthName(item.month) }}</small>
@@ -40,7 +45,7 @@ const selected = defineModel<string>('selected', { default: '' })
         </span>
       </button>
     </div>
-    <p class="days__note">{{ t('days.note') }}</p>
+    <p class="days__note" data-testid="days-note">{{ t('days.note') }}</p>
   </div>
 </template>
 
@@ -65,7 +70,7 @@ const selected = defineModel<string>('selected', { default: '' })
   align-items: center;
   min-width: 0;
   padding: 6px 2px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--bg);
   text-align: center;
 }
@@ -79,10 +84,15 @@ const selected = defineModel<string>('selected', { default: '' })
   outline-offset: 2px;
 }
 
-.day--selected,
-.day--selected:hover {
+.day--today,
+.day--today:hover {
   background: var(--surface);
   box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
+.day--selected,
+.day--selected:hover {
+  background: var(--line);
 }
 
 .day__name {

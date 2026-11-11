@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import type { City } from '@/types/city'
 import { isCity } from '@/utils/city'
@@ -8,7 +8,11 @@ export const FAVORITES_MAX = 5
 
 const STORAGE_KEY = 'weather:favorites'
 
-const isCityList = (v: unknown): v is City[] => Array.isArray(v) && v.every(isCity)
+const isCityList = (v: unknown): v is City[] =>
+  Array.isArray(v) &&
+  v.length <= FAVORITES_MAX &&
+  v.every(isCity) &&
+  new Set(v.map((city) => city.id)).size === v.length
 
 export const useFavoritesStore = defineStore('favorites', () => {
   const items = ref<City[]>(readJson(STORAGE_KEY, isCityList, []))
@@ -45,7 +49,14 @@ export const useFavoritesStore = defineStore('favorites', () => {
     pendingCity.value = null
   }
 
+  function onStorage(event: StorageEvent): void {
+    if (event.key === STORAGE_KEY) items.value = readJson(STORAGE_KEY, isCityList, [])
+  }
+
   watch(items, (v) => writeJson(STORAGE_KEY, v), { deep: true })
+
+  window.addEventListener('storage', onStorage)
+  onScopeDispose(() => window.removeEventListener('storage', onStorage))
 
   return { items, pendingCity, count, isFavorite, toggle, remove, cancelPending }
 })

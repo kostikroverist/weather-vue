@@ -1,8 +1,8 @@
 import { onScopeDispose, ref, watch } from 'vue'
-import axios from 'axios'
 import { locale } from '@/i18n'
 import { searchCities } from '@/services/geo.service'
 import type { City } from '@/types/city'
+import { matchesQuery } from '@/utils/city'
 
 const DEBOUNCE_MS = 300
 const MIN_LENGTH = 2
@@ -31,20 +31,26 @@ export function useCitySearch() {
     error.value = false
     try {
       const found = await searchCities(q, own.signal)
-      if (!own.signal.aborted) results.value = found
-    } catch (e) {
-      if (!own.signal.aborted && !axios.isCancel(e)) error.value = true
+      if (!own.signal.aborted) results.value = found.filter((c) => matchesQuery(c, q))
+    } catch {
+      if (!own.signal.aborted) error.value = true
     } finally {
       if (!own.signal.aborted) loading.value = false
     }
   }
 
-  watch(query, (value) => {
+  function retry(): void {
+    const q = query.value.trim()
+    if (q.length < MIN_LENGTH) return
     clearTimeout(timer)
+    void search(q)
+  }
+
+  watch(query, (value) => {
+    cancel()
+    results.value = []
     const q = value.trim()
     if (q.length < MIN_LENGTH) {
-      cancel()
-      results.value = []
       error.value = false
       return
     }
@@ -52,12 +58,7 @@ export function useCitySearch() {
     timer = setTimeout(() => search(q), DEBOUNCE_MS)
   })
 
-  watch(locale, () => {
-    const q = query.value.trim()
-    if (q.length < MIN_LENGTH) return
-    clearTimeout(timer)
-    void search(q)
-  })
+  watch(locale, retry)
 
   function clear(): void {
     cancel()
@@ -68,5 +69,5 @@ export function useCitySearch() {
 
   onScopeDispose(cancel)
 
-  return { query, results, loading, error, clear }
+  return { query, results, loading, error, clear, retry }
 }

@@ -72,8 +72,32 @@ describe('favorites store', () => {
     expect(useFavoritesStore().items).toEqual([city(1)])
   })
 
-  it.each(['{broken', '[{"id":1}]', '{"a":1}'])('пошкоджений localStorage %s дає []', (raw) => {
+  it.each([
+    '{broken',
+    '[{"id":1}]',
+    '{"a":1}',
+    JSON.stringify([city(1), city(1)]),
+    JSON.stringify([1, 2, 3, 4, 5, 6].map(city)),
+  ])('пошкоджений localStorage %s дає []', (raw) => {
     localStorage.setItem(KEY, raw)
     expect(useFavoritesStore().items).toEqual([])
+  })
+
+  it('перечитує обране з події storage свого ключа', () => {
+    const store = useFavoritesStore()
+    const next = JSON.stringify([city(2), city(3)])
+    localStorage.setItem(KEY, next)
+    window.dispatchEvent(new StorageEvent('storage', { key: KEY, newValue: next }))
+    expect(store.items).toEqual([city(2), city(3)])
+  })
+
+  it('подія storage з пошкодженими даними дає [], чужий ключ ігнорується', () => {
+    localStorage.setItem(KEY, JSON.stringify([city(1)]))
+    const store = useFavoritesStore()
+    window.dispatchEvent(new StorageEvent('storage', { key: 'other', newValue: '[]' }))
+    expect(store.items).toEqual([city(1)])
+    localStorage.setItem(KEY, '{broken')
+    window.dispatchEvent(new StorageEvent('storage', { key: KEY, newValue: '{broken' }))
+    expect(store.items).toEqual([])
   })
 })

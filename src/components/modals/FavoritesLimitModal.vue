@@ -26,7 +26,11 @@ const open = computed({
     <ul class="limit__list">
       <li v-for="city in favorites.items" :key="city.id" class="limit__item">
         <span>{{ cityName(city) }}</span>
-        <BaseButton variant="link" @click="favorites.remove(city.id)">
+        <BaseButton
+          variant="link"
+          :aria-label="t('fav.limit.removeAria', { city: cityName(city) })"
+          @click="favorites.remove(city.id)"
+        >
           {{ t('common.delete') }}
         </BaseButton>
       </li>

@@ -14,21 +14,21 @@ const description = computed(() => {
   return text.charAt(0).toUpperCase() + text.slice(1)
 })
 
-const stats = computed(() => [
-  { label: t('weather.humidity'), value: `${props.current.humidity}%` },
-  {
-    label: t('weather.wind'),
-    value: t('weather.windValue', { v: Math.round(props.current.windSpeed) }),
-  },
-  {
-    label: t('weather.pressure'),
-    value: t('weather.pressureValue', { v: props.current.pressure }),
-  },
-  {
-    label: t(props.current.sunEvent.kind === 'sunrise' ? 'weather.sunrise' : 'weather.sunset'),
-    value: props.current.sunEvent.time,
-  },
-])
+const stats = computed(() => {
+  const { humidity, windSpeed, pressure, sunEvent } = props.current
+  const list = [
+    { label: t('weather.humidity'), value: `${humidity}%` },
+    { label: t('weather.wind'), value: t('weather.windValue', { v: Math.round(windSpeed) }) },
+    { label: t('weather.pressure'), value: t('weather.pressureValue', { v: pressure }) },
+  ]
+  if (sunEvent) {
+    list.push({
+      label: t(sunEvent.kind === 'sunrise' ? 'weather.sunrise' : 'weather.sunset'),
+      value: sunEvent.time,
+    })
+  }
+  return list
+})
 </script>
 
 <template>
@@ -93,7 +93,8 @@ const stats = computed(() => [
 
 .card__stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
   gap: 6px;
   margin: 12px 0 6px;
   font-size: 12px;
@@ -112,6 +113,7 @@ const stats = computed(() => [
 @media (max-width: 480px) {
   .card__stats {
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-flow: row;
   }
 }
 </style>

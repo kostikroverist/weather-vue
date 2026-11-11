@@ -13,6 +13,7 @@ export const en: Record<MessageKey, string> = {
   'search.error': 'Could not load the city list',
   'mode.day': 'Day',
   'mode.days': '5 days',
+  'mode.aria': 'View mode',
   'fav.add': '☆ Add to favorites',
   'fav.added': '★ In favorites',
   'fav.remove': '★ Remove',
@@ -20,6 +21,7 @@ export const en: Record<MessageKey, string> = {
   'fav.emptyLink': 'Go to home',
   'fav.limit.title': 'Favorites already has 5 cities',
   'fav.limit.text': 'To add {city}, remove one city: the limit is 5.',
+  'fav.limit.removeAria': 'Remove {city}',
   'block.delete.title': 'Delete the “{city}” block?',
   'block.delete.titleEmpty': 'Delete the empty block?',
   'block.delete.text':
@@ -38,7 +40,10 @@ export const en: Record<MessageKey, string> = {
   'weather.sunrise': 'Sunrise',
   'weather.sunset': 'Sunset',
   'weather.error': 'Could not load the weather',
+  'weather.updatedAt': 'Updated {time}',
+  'weather.refresh': 'Refresh',
   'days.hourly': 'Hourly: {date}',
+  'days.back': 'Back to 5 days',
   'days.note':
     'Daily average, min / max and chance of precipitation. Pick a day to see it by the hour',
   'weekday.0': 'Sun',
@@ -78,4 +83,6 @@ export const en: Record<MessageKey, string> = {
   'theme.light': 'Day',
   'theme.dark': 'Night',
   'locale.label': 'Language',
+  'locale.uk': 'УКР',
+  'locale.en': 'EN',
 }

@@ -35,6 +35,11 @@ export function cityOptionLabel(c: City): string {
   return parts.join(', ')
 }
 
+export function matchesQuery(city: City, query: string): boolean {
+  const q = query.trim().toLocaleLowerCase()
+  return [city.names.uk, city.names.en].some((name) => name.toLocaleLowerCase().startsWith(q))
+}
+
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
 
 export function isCity(v: unknown): v is City {

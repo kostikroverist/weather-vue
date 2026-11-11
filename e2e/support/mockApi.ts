@@ -10,8 +10,10 @@ const PIXEL_PNG = Buffer.from(
 
 export async function mockApi(page: Page): Promise<void> {
   await page.route('**/geo/1.0/direct**', async (route) => {
-    const q = (new URL(route.request().url()).searchParams.get('q') ?? '').toLowerCase()
-    const found = geo.filter((city) => city.local_names.uk.toLowerCase().startsWith(q))
+    const q = (new URL(route.request().url()).searchParams.get('q') ?? '').trim().toLowerCase()
+    const found = geo.filter((city) =>
+      [city.name, ...Object.values(city.local_names)].some((name) => name.toLowerCase() === q),
+    )
     await route.fulfill({ json: found })
   })
   await page.route('**/geo/1.0/reverse**', async (route) => {

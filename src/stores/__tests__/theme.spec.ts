@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { useThemeStore } from '../theme'
@@ -77,5 +77,36 @@ describe('theme store', () => {
   it('невалідне збережене значення дня дає день', () => {
     localStorage.setItem('weather:daylight', '"yes"')
     expect(useThemeStore().daylight).toBe(true)
+  })
+
+  describe('без збереженого дня бере системну тему', () => {
+    function mockPrefersDark(dark: boolean) {
+      vi.stubGlobal(
+        'matchMedia',
+        vi.fn((query: string) => ({ matches: dark && query === '(prefers-color-scheme: dark)' })),
+      )
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('система темна -> ніч', () => {
+      mockPrefersDark(true)
+      const store = useThemeStore()
+      expect(store.daylight).toBe(false)
+      expect(store.resolved).toBe('dark')
+    })
+
+    it('система світла -> день', () => {
+      mockPrefersDark(false)
+      expect(useThemeStore().daylight).toBe(true)
+    })
+
+    it('збережене значення важливіше за систему', () => {
+      mockPrefersDark(true)
+      localStorage.setItem('weather:daylight', 'true')
+      expect(useThemeStore().daylight).toBe(true)
+    })
   })
 })

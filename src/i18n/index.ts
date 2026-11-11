@@ -23,6 +23,7 @@ watch(
   (value) => {
     writeJson(STORAGE_KEY, value)
     document.documentElement.lang = value
+    document.title = t('app.title')
   },
   { immediate: true },
 )
@@ -49,6 +50,15 @@ export function formatNumber(value: number, maxFractionDigits = 1): string {
   return new Intl.NumberFormat(NUMBER_LOCALES[locale.value], {
     maximumFractionDigits: maxFractionDigits,
   }).format(value)
+}
+
+const TIME_LOCALES: Record<Locale, string> = { uk: 'uk-UA', en: 'en-GB' }
+
+export function formatTime(ts: number): string {
+  return new Intl.DateTimeFormat(TIME_LOCALES[locale.value], {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(ts)
 }
 
 export function apiLang(): 'ua' | 'en' {

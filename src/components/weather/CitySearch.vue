@@ -1,17 +1,22 @@
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue'
+import { computed, ref, useId, useTemplateRef, watch } from 'vue'
 import { t } from '@/i18n'
 import { useCitySearch } from '@/composables/useCitySearch'
 import type { City } from '@/types/city'
-import BaseSkeleton from '@/components/ui/BaseSkeleton.vue'
-import { cityLabel, cityOptionLabel } from '@/utils/city'
+import CitySearchList from '@/components/weather/CitySearchList.vue'
+import { cityLabel } from '@/utils/city'
 
 const city = defineModel<City | null>('city', { default: null })
 
-const { query, results, loading, error, clear } = useCitySearch()
+const { query, results, loading, error, clear, retry } = useCitySearch()
 const editing = ref(false)
 const active = ref(-1)
 const listId = useId()
+const input = useTemplateRef<HTMLInputElement>('input')
+
+watch(results, () => {
+  active.value = -1
+})
 
 const inputValue = computed(() => {
   if (editing.value) return query.value
@@ -20,8 +25,14 @@ const inputValue = computed(() => {
 
 const open = computed(() => editing.value && query.value.trim().length >= 2)
 
+const listShown = computed(
+  () => open.value && !loading.value && !error.value && results.value.length > 0,
+)
+
 const activeId = computed(() =>
-  open.value && active.value >= 0 ? `${listId}-${active.value}` : undefined,
+  listShown.value && active.value >= 0 && active.value < results.value.length
+    ? `${listId}-${active.value}`
+    : undefined,
 )
 
 function close(): void {
@@ -33,6 +44,18 @@ function close(): void {
 function select(next: City): void {
   city.value = next
   close()
+}
+
+function onFocusout(event: FocusEvent): void {
+  const next = event.relatedTarget
+  const root = event.currentTarget
+  if (next instanceof Node && root instanceof Node && root.contains(next)) return
+  close()
+}
+
+function onRetry(): void {
+  input.value?.focus()
+  retry()
 }
 
 function onInput(event: Event): void {
@@ -48,16 +71,21 @@ function onFocus(event: FocusEvent): void {
 
 function move(step: number): void {
   const count = results.value.length
-  if (!count) return
   active.value = (active.value + step + count) % count
 }
 
+function onEscape(): void {
+  close()
+  input.value?.focus()
+}
+
 function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape') {
-    close()
+  if (event.key === 'Enter' && open.value && error.value) {
+    event.preventDefault()
+    retry()
     return
   }
-  if (!open.value) return
+  if (!listShown.value) return
   if (event.key === 'ArrowDown') {
     event.preventDefault()
     move(1)
@@ -65,58 +93,49 @@ function onKeydown(event: KeyboardEvent): void {
     event.preventDefault()
     move(-1)
   } else if (event.key === 'Enter') {
-    const picked = results.value[active.value]
+    const picked = results.value[Math.max(active.value, 0)]
     if (picked) {
       event.preventDefault()
       select(picked)
     }
   }
 }
+
+defineExpose({ focus: () => input.value?.focus() })
 </script>
 
 <template>
-  <div class="search">
+  <div class="search" @focusout="onFocusout" @keydown.escape="onEscape">
     <input
+      ref="input"
       class="search__input"
       data-testid="city-input"
       type="text"
       role="combobox"
       autocomplete="off"
       aria-autocomplete="list"
-      :aria-expanded="open"
-      :aria-controls="listId"
+      :aria-label="t('search.placeholder')"
+      :aria-expanded="listShown"
+      :aria-controls="listShown ? listId : undefined"
       :aria-activedescendant="activeId"
       :placeholder="t('search.placeholder')"
       :value="inputValue"
       @input="onInput"
       @focus="onFocus"
-      @blur="close"
       @keydown="onKeydown"
     />
     <span v-if="loading" class="search__spinner" aria-hidden="true"></span>
-    <div v-if="open" class="search__dropdown">
-      <div v-if="loading" class="search__loading" role="status" :aria-label="t('common.loading')">
-        <BaseSkeleton v-for="n in 3" :key="n" height="18px" />
-      </div>
-      <p v-else-if="error" class="search__state">{{ t('search.error') }}</p>
-      <p v-else-if="!results.length" class="search__state">{{ t('search.notFound') }}</p>
-      <ul v-else :id="listId" class="search__list" role="listbox">
-        <li
-          v-for="(item, index) in results"
-          :id="`${listId}-${index}`"
-          :key="`${item.id}-${index}`"
-          class="search__option"
-          :class="{ 'search__option--active': index === active }"
-          role="option"
-          :aria-selected="index === active"
-          data-testid="city-option"
-          @mousedown.prevent="select(item)"
-          @mouseenter="active = index"
-        >
-          {{ cityOptionLabel(item) }}
-        </li>
-      </ul>
-    </div>
+    <CitySearchList
+      v-if="open"
+      :id="listId"
+      :results="results"
+      :loading="loading"
+      :error="error"
+      :active="active"
+      @select="select"
+      @hover="active = $event"
+      @retry="onRetry"
+    />
   </div>
 </template>
 
@@ -147,20 +166,6 @@ function onKeydown(event: KeyboardEvent): void {
   outline-offset: 1px;
 }
 
-.search__dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 10;
-  padding: 4px;
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  box-shadow:
-    0 0 0 1px var(--line),
-    0 8px 24px var(--backdrop);
-}
-
 .search__spinner {
   position: absolute;
   top: 50%;
@@ -175,13 +180,6 @@ function onKeydown(event: KeyboardEvent): void {
   pointer-events: none;
 }
 
-.search__loading {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-}
-
 @keyframes search-spin {
   to {
     transform: rotate(360deg);
@@ -192,22 +190,5 @@ function onKeydown(event: KeyboardEvent): void {
   .search__spinner {
     animation: none;
   }
-}
-
-.search__state {
-  padding: 8px 10px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.search__option {
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.search__option--active {
-  background: var(--bg);
 }
 </style>
